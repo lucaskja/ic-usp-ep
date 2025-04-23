@@ -95,16 +95,20 @@ To train the models with K-Fold cross-validation:
 
 ```bash
 # Base MobileNetV2
-python train.py --model base --data_dir datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001 --k_folds 5
+cd base_mobilenetv2
+python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001
 
 # MobileNetV2 with Mish
-python train.py --model mish --data_dir datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001 --k_folds 5
+cd stage1_mish
+python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001
 
 # MobileNetV2 with Mish and Triplet Attention
-python train.py --model triplet --data_dir datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001 --k_folds 5
+cd stage2_triplet
+python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001
 
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
-python train.py --model cnsn --data_dir datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001 --k_folds 5
+cd stage3_cnsn
+python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001
 ```
 
 #### Advanced Training with SGD and Learning Rate Decay
@@ -113,24 +117,26 @@ For training with SGD optimizer and learning rate decay (recommended for optimal
 
 ```bash
 # Base MobileNetV2 with SGD and LR decay
-python train.py --model base --data_dir datasets/leaf_disease --epochs 60 --batch_size 32 --optimizer sgd --lr 0.001 --lr_scheduler step --lr_step_size 20 --lr_gamma 0.1 --loss cross_entropy --k_folds 5
+cd base_mobilenetv2
+python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001
 
 # MobileNetV2 with Mish
-python train.py --model mish --data_dir datasets/leaf_disease --epochs 60 --batch_size 32 --optimizer sgd --lr 0.001 --lr_scheduler step --lr_step_size 20 --lr_gamma 0.1 --loss cross_entropy --k_folds 5
+cd stage1_mish
+python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001
 
 # MobileNetV2 with Mish and Triplet Attention
-python train.py --model triplet --data_dir datasets/leaf_disease --epochs 60 --batch_size 32 --optimizer sgd --lr 0.001 --lr_scheduler step --lr_step_size 20 --lr_gamma 0.1 --loss cross_entropy --k_folds 5
+cd stage2_triplet
+python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001
 
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
-python train.py --model cnsn --data_dir datasets/leaf_disease --epochs 60 --batch_size 32 --optimizer sgd --lr 0.001 --lr_scheduler step --lr_step_size 20 --lr_gamma 0.1 --loss cross_entropy --k_folds 5
+cd stage3_cnsn
+python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001
 ```
 
-These commands configure:
-- 60 training epochs
-- SGD optimizer with initial learning rate of 0.001
-- Learning rate decay by a factor of 0.1 every 20 epochs
-- Cross-entropy loss function
-- 5-fold cross-validation
+Note: The learning rate scheduler is already configured in the default configuration files with:
+- SGD optimizer with momentum 0.9 and weight decay 1e-4
+- Step learning rate scheduler that reduces the learning rate by a factor of 0.1 every 10 epochs
+- You can modify these settings in the respective config files in each model's directory
 ```
 
 ### Evaluation
@@ -139,16 +145,20 @@ To evaluate the models on the test set:
 
 ```bash
 # Base MobileNetV2
-python evaluate.py --model base --data_dir datasets/leaf_disease/test --checkpoint checkpoints/base_best.pth
+cd base_mobilenetv2
+python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth
 
 # MobileNetV2 with Mish
-python evaluate.py --model mish --data_dir datasets/leaf_disease/test --checkpoint checkpoints/mish_best.pth
+cd stage1_mish
+python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth
 
 # MobileNetV2 with Mish and Triplet Attention
-python evaluate.py --model triplet --data_dir datasets/leaf_disease/test --checkpoint checkpoints/triplet_best.pth
+cd stage2_triplet
+python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth
 
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
-python evaluate.py --model cnsn --data_dir datasets/leaf_disease/test --checkpoint checkpoints/cnsn_best.pth
+cd stage3_cnsn
+python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth
 ```
 
 ### Visualization and Analysis
