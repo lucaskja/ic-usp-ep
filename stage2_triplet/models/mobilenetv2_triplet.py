@@ -5,29 +5,27 @@ import torch
 import torch.nn as nn
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
 
-from mobilenetv2_improvements.stage1_mish.models.mish import replace_relu_with_mish
-from mobilenetv2_improvements.stage2_triplet.models.triplet_attention import TripletAttention
+from stage1_mish.models.mish import replace_relu_with_mish
+from stage2_triplet.models.triplet_attention import TripletAttention
 
 
-class InvertedResidualWithTriplet(nn.Module):
+class InvertedResidualWithTripletAttention(nn.Module):
     """
     Inverted Residual block with Triplet Attention.
+    Wraps the original block and adds Triplet Attention after it.
     """
-    def __init__(self, inverted_residual_block, use_triplet=True, kernel_size=7):
+    def __init__(self, inverted_residual_block):
         """
-        Initialize Inverted Residual block with Triplet Attention.
+        Initialize wrapper for inverted residual block.
         
         Args:
-            inverted_residual_block (nn.Module): Original inverted residual block
-            use_triplet (bool): Whether to use triplet attention
-            kernel_size (int): Kernel size for triplet attention
+            inverted_residual_block: Original inverted residual block
         """
-        super(InvertedResidualWithTriplet, self).__init__()
-        self.inverted_block = inverted_residual_block
-        self.use_triplet = use_triplet
-        if use_triplet:
-            self.triplet_attention = TripletAttention(kernel_size=kernel_size)
-        
+        super(InvertedResidualWithTripletAttention, self).__init__()
+        self.block = inverted_residual_block
+        self.attention = TripletAttention(kernel_size=7)
+        self.use_res_connect = self.block.use_res_connect
+    
     def forward(self, x):
         """
         Forward pass.
@@ -38,19 +36,22 @@ class InvertedResidualWithTriplet(nn.Module):
         Returns:
             torch.Tensor: Output tensor
         """
-        x = self.inverted_block(x)
-        if self.use_triplet:
-            x = self.triplet_attention(x)
-        return x
+        if self.use_res_connect:
+            out = self.block.conv(x)
+            out = self.attention(out)
+            return x + out
+        else:
+            out = self.block(x)
+            out = self.attention(out)
+            return out
 
 
-def add_triplet_attention_to_mobilenetv2(model, kernel_size=7):
+def add_triplet_attention_to_mobilenetv2(model):
     """
     Add Triplet Attention to MobileNetV2 model.
     
     Args:
         model (nn.Module): MobileNetV2 model
-        kernel_size (int): Kernel size for triplet attention
         
     Returns:
         nn.Module: MobileNetV2 model with Triplet Attention
@@ -58,35 +59,32 @@ def add_triplet_attention_to_mobilenetv2(model, kernel_size=7):
     # Add Triplet Attention after each inverted residual block
     for i, layer in enumerate(model.features):
         if hasattr(layer, 'conv'):  # Check if it's an inverted residual block
-            model.features[i] = InvertedResidualWithTriplet(layer, kernel_size=kernel_size)
+            model.features[i] = InvertedResidualWithTripletAttention(layer)
     
     return model
 
 
-def create_mobilenetv2_triplet(num_classes, pretrained=True, use_mish=True, kernel_size=7):
+def create_mobilenetv2_triplet(num_classes, pretrained=True):
     """
     Create a MobileNetV2 model with Mish activation and Triplet Attention.
     
     Args:
         num_classes (int): Number of output classes
         pretrained (bool): Whether to use pretrained weights
-        use_mish (bool): Whether to use Mish activation
-        kernel_size (int): Kernel size for triplet attention
         
     Returns:
-        nn.Module: MobileNetV2 model with Mish activation and Triplet Attention
+        nn.Module: MobileNetV2 model with Mish and Triplet Attention
     """
     if pretrained:
         model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
     else:
         model = mobilenet_v2(weights=None)
     
-    # Replace ReLU6 with Mish if specified
-    if use_mish:
-        model = replace_relu_with_mish(model)
+    # Replace ReLU6 with Mish
+    model = replace_relu_with_mish(model)
     
     # Add Triplet Attention
-    model = add_triplet_attention_to_mobilenetv2(model, kernel_size=kernel_size)
+    model = add_triplet_attention_to_mobilenetv2(model)
     
     # Modify the classifier for our number of classes
     in_features = model.classifier[1].in_features
@@ -102,23 +100,16 @@ class MobileNetV2TripletModel(nn.Module):
     """
     Wrapper class for MobileNetV2 model with Mish activation and Triplet Attention.
     """
-    def __init__(self, num_classes, pretrained=True, use_mish=True, kernel_size=7):
+    def __init__(self, num_classes, pretrained=True):
         """
         Initialize MobileNetV2 model with Mish activation and Triplet Attention.
         
         Args:
             num_classes (int): Number of output classes
             pretrained (bool): Whether to use pretrained weights
-            use_mish (bool): Whether to use Mish activation
-            kernel_size (int): Kernel size for triplet attention
         """
         super(MobileNetV2TripletModel, self).__init__()
-        self.model = create_mobilenetv2_triplet(
-            num_classes, 
-            pretrained=pretrained, 
-            use_mish=use_mish, 
-            kernel_size=kernel_size
-        )
+        self.model = create_mobilenetv2_triplet(num_classes, pretrained)
         
     def forward(self, x):
         """

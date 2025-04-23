@@ -10,39 +10,9 @@ import torch.nn as nn
 
 class ZPool(nn.Module):
     """
-    Z-pool module that concatenates max and average pooling.
+    Z-pool module for Triplet Attention.
+    Combines max pooling and average pooling along a dimension.
     """
-    def forward(self, x):
-        """
-        Forward pass.
-        
-        Args:
-            x (torch.Tensor): Input tensor of shape (B, C, H, W)
-            
-        Returns:
-            torch.Tensor: Output tensor of shape (B, 2, H, W)
-        """
-        avg_pool = torch.mean(x, dim=1, keepdim=True)
-        max_pool, _ = torch.max(x, dim=1, keepdim=True)
-        return torch.cat([avg_pool, max_pool], dim=1)
-
-
-class AttentionGate(nn.Module):
-    """
-    Attention gate module.
-    """
-    def __init__(self, kernel_size=7):
-        """
-        Initialize attention gate.
-        
-        Args:
-            kernel_size (int): Kernel size for the convolutional layer
-        """
-        super(AttentionGate, self).__init__()
-        self.zpool = ZPool()
-        self.conv = nn.Conv2d(2, 1, kernel_size=kernel_size, padding=kernel_size//2)
-        self.bn = nn.BatchNorm2d(1)
-        
     def forward(self, x):
         """
         Forward pass.
@@ -51,63 +21,111 @@ class AttentionGate(nn.Module):
             x (torch.Tensor): Input tensor
             
         Returns:
-            torch.Tensor: Output tensor after applying attention
+            torch.Tensor: Concatenated max and average pooled features
         """
-        z = self.zpool(x)
-        z = self.conv(z)
-        z = self.bn(z)
-        z = torch.sigmoid(z)
-        return x * z
+        # Apply max pooling and average pooling along channel dimension
+        avg_pool = torch.mean(x, dim=1, keepdim=True)
+        max_pool = torch.max(x, dim=1, keepdim=True)[0]
+        
+        # Concatenate along channel dimension
+        return torch.cat([avg_pool, max_pool], dim=1)
+
+
+class AttentionGate(nn.Module):
+    """
+    Attention gate for Triplet Attention.
+    """
+    def __init__(self, kernel_size=7):
+        """
+        Initialize attention gate.
+        
+        Args:
+            kernel_size (int): Size of convolutional kernel
+        """
+        super(AttentionGate, self).__init__()
+        self.zpool = ZPool()
+        self.conv = nn.Conv2d(2, 1, kernel_size=kernel_size, padding=kernel_size//2)
+        self.sigmoid = nn.Sigmoid()
+    
+    def forward(self, x):
+        """
+        Forward pass.
+        
+        Args:
+            x (torch.Tensor): Input tensor
+            
+        Returns:
+            torch.Tensor: Attention map
+        """
+        z_pooled = self.zpool(x)
+        conv_out = self.conv(z_pooled)
+        attention_map = self.sigmoid(conv_out)
+        return attention_map
 
 
 class TripletAttention(nn.Module):
     """
     Triplet Attention Module.
     
-    This module has three branches:
-    1. Channel-Height branch: Captures channel-height interactions
-    2. Channel-Width branch: Captures channel-width interactions
-    3. Spatial branch: Captures spatial interactions
+    Captures cross-dimension interactions through a three-branch structure:
+    1. Channel-Height interaction
+    2. Channel-Width interaction
+    3. Height-Width (spatial) interaction
     """
     def __init__(self, kernel_size=7):
         """
         Initialize Triplet Attention module.
         
         Args:
-            kernel_size (int): Kernel size for the convolutional layers
+            kernel_size (int): Size of convolutional kernel in attention gates
         """
         super(TripletAttention, self).__init__()
-        self.ch_gate = AttentionGate(kernel_size)
-        self.cw_gate = AttentionGate(kernel_size)
-        self.hw_gate = AttentionGate(kernel_size)
         
+        # Branch 1: Channel-Height interaction
+        self.ch_gate = AttentionGate(kernel_size)
+        
+        # Branch 2: Channel-Width interaction
+        self.cw_gate = AttentionGate(kernel_size)
+        
+        # Branch 3: Height-Width (spatial) interaction
+        self.hw_gate = AttentionGate(kernel_size)
+    
     def forward(self, x):
         """
         Forward pass.
         
         Args:
-            x (torch.Tensor): Input tensor of shape (B, C, H, W)
+            x (torch.Tensor): Input tensor of shape [B, C, H, W]
             
         Returns:
-            torch.Tensor: Output tensor of shape (B, C, H, W)
+            torch.Tensor: Output tensor with same shape as input
         """
-        # Original input
-        x_perm1 = x
+        # Original input dimensions
+        B, C, H, W = x.size()
         
-        # Channel-Height branch
-        x_perm2 = x.permute(0, 2, 1, 3)  # (B, H, C, W)
-        x_perm2 = self.ch_gate(x_perm2)
-        x_perm2 = x_perm2.permute(0, 2, 1, 3)  # (B, C, H, W)
+        # Branch 1: Channel-Height interaction
+        # Rotate tensor to [B, C, W, H]
+        x_perm1 = x.permute(0, 1, 3, 2)
+        # Apply attention
+        ch_attention = self.ch_gate(x_perm1)
+        # Rotate back and apply attention
+        ch_attention = ch_attention.permute(0, 1, 3, 2)
+        x_ch = x * ch_attention
         
-        # Channel-Width branch
-        x_perm3 = x.permute(0, 3, 2, 1)  # (B, W, H, C)
-        x_perm3 = self.cw_gate(x_perm3)
-        x_perm3 = x_perm3.permute(0, 3, 2, 1)  # (B, C, H, W)
+        # Branch 2: Channel-Width interaction
+        # Rotate tensor to [B, H, C, W]
+        x_perm2 = x.permute(0, 2, 1, 3)
+        # Apply attention
+        cw_attention = self.cw_gate(x_perm2)
+        # Rotate back and apply attention
+        cw_attention = cw_attention.permute(0, 2, 1, 3)
+        x_cw = x * cw_attention
         
-        # Spatial branch
-        x_perm4 = self.hw_gate(x)
+        # Branch 3: Height-Width (spatial) interaction
+        hw_attention = self.hw_gate(x)
+        x_hw = x * hw_attention
         
         # Combine all branches (average)
-        x_out = (x_perm2 + x_perm3 + x_perm4) / 3
+        x_out = (x_ch + x_cw + x_hw) / 3
         
         return x_out
