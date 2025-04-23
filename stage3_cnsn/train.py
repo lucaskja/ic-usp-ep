@@ -1,5 +1,5 @@
 """
-Training script for MobileNetV2 with Mish activation, Triplet Attention, and CNSN.
+Training script for MobileNetV2 with Mish, Triplet Attention, and CNSN.
 """
 import os
 import argparse
@@ -9,9 +9,12 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
-from stage3_cnsn.models.mobilenetv2_cnsn import MobileNetV2CNSNModel
+from models.mobilenetv2_mish_triplet_cnsn import MobileNetV2MishTripletCNSNModel
+import sys
+sys.path.append('..')  # Add parent directory to path
 from utils.data_utils import load_dataset
-from utils.training_utils import train_one_epoch, validate, save_checkpoint
+from utils.model_utils import get_model_size, print_model_summary
+from utils.training_utils import train_one_epoch, validate, save_checkpoint, setup_logging, EarlyStopping
 from base_mobilenetv2.configs.default_config import TRAIN_CONFIG, DATA_CONFIG
 
 
@@ -34,6 +37,15 @@ def parse_args():
                         help='Disable CUDA')
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed')
+    parser.add_argument('--debug', action='store_true',
+                        help='Run in debug mode with smaller dataset')
+    parser.add_argument('--early_stopping', type=int, default=10,
+                        help='Patience for early stopping (0 to disable)')
+    parser.add_argument('--checkpoint_dir', type=str, default='checkpoints',
+                        help='Directory to save checkpoints')
+    parser.add_argument('--cn_mode', type=str, default='2-instance',
+                        choices=['1-instance', '2-instance', 'crop'],
+                        help='CrossNorm mode')
     
     return parser.parse_args()
 
@@ -42,8 +54,13 @@ def main():
     """Main training function."""
     args = parse_args()
     
+    # Set up logging
+    setup_logging('stage3_cnsn', 'logs')
+    
     # Set random seed
     torch.manual_seed(args.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(args.seed)
     
     # Set device
     use_cuda = not args.no_cuda and torch.cuda.is_available()
@@ -52,6 +69,7 @@ def main():
     
     # Create output directory
     os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(args.checkpoint_dir, exist_ok=True)
     
     # Load dataset
     train_loader, val_loader, num_classes = load_dataset(
@@ -59,14 +77,20 @@ def main():
         img_size=DATA_CONFIG['img_size'],
         batch_size=args.batch_size or DATA_CONFIG['batch_size'],
         val_split=DATA_CONFIG['val_split'],
-        num_workers=DATA_CONFIG['num_workers']
+        num_workers=DATA_CONFIG['num_workers'],
+        debug=args.debug
     )
     print(f"Dataset loaded with {num_classes} classes")
     
     # Create model
-    model = MobileNetV2CNSNModel(num_classes, pretrained=args.pretrained)
+    model = MobileNetV2MishTripletCNSNModel(num_classes, pretrained=args.pretrained, cn_mode=args.cn_mode)
     model = model.to(device)
-    print("MobileNetV2 with Mish activation, Triplet Attention, and CNSN model created")
+    print(f"MobileNetV2 with Mish, Triplet Attention, and CNSN (mode: {args.cn_mode}) model created")
+    
+    # Print model summary
+    print_model_summary(model)
+    model_size_mb = get_model_size(model)
+    print(f"Model Size: {model_size_mb:.2f} MB")
     
     # Define loss function and optimizer
     criterion = nn.CrossEntropyLoss()
@@ -100,6 +124,9 @@ def main():
     else:
         scheduler = None
     
+    # Create early stopping object
+    early_stopping = EarlyStopping(patience=args.early_stopping) if args.early_stopping > 0 else None
+    
     # Training loop
     best_acc = 0.0
     train_losses = []
@@ -109,8 +136,6 @@ def main():
     
     print(f"Starting training for {train_config['epochs']} epochs")
     for epoch in range(train_config['epochs']):
-        print(f"Epoch {epoch+1}/{train_config['epochs']}")
-        
         # Train for one epoch
         train_metrics = train_one_epoch(
             model,
@@ -118,7 +143,8 @@ def main():
             criterion,
             optimizer,
             device,
-            epoch
+            epoch,
+            train_config['epochs']
         )
         
         # Evaluate on validation set
@@ -139,12 +165,6 @@ def main():
         val_losses.append(val_metrics['loss'])
         val_accs.append(val_metrics['acc1'].item())
         
-        # Print metrics
-        print(f"Train Loss: {train_metrics['loss']:.4f}, "
-              f"Train Acc: {train_metrics['acc1']:.2f}%, "
-              f"Val Loss: {val_metrics['loss']:.4f}, "
-              f"Val Acc: {val_metrics['acc1']:.2f}%")
-        
         # Save checkpoint
         is_best = val_metrics['acc1'] > best_acc
         best_acc = max(val_metrics['acc1'], best_acc)
@@ -153,12 +173,18 @@ def main():
             {
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
-                'best_acc1': best_acc,
+                'best_acc': best_acc,
                 'optimizer': optimizer.state_dict(),
             },
             is_best,
-            args.output_dir
+            checkpoint_dir=args.checkpoint_dir,
+            filename=f'checkpoint_epoch_{epoch+1}.pth'
         )
+        
+        # Check early stopping
+        if early_stopping and early_stopping(val_metrics['acc1']):
+            print(f"Early stopping triggered after epoch {epoch+1}")
+            break
     
     print(f"Training completed. Best validation accuracy: {best_acc:.2f}%")
     
