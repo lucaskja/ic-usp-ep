@@ -91,6 +91,8 @@ pip install -r requirements.txt
 
 To train the models with K-Fold cross-validation:
 
+#### Basic Training Commands
+
 ```bash
 # Base MobileNetV2
 python train.py --model base --data_dir datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001 --k_folds 5
@@ -103,6 +105,32 @@ python train.py --model triplet --data_dir datasets/leaf_disease --epochs 50 --b
 
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
 python train.py --model cnsn --data_dir datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001 --k_folds 5
+```
+
+#### Advanced Training with SGD and Learning Rate Decay
+
+For training with SGD optimizer and learning rate decay (recommended for optimal results):
+
+```bash
+# Base MobileNetV2 with SGD and LR decay
+python train.py --model base --data_dir datasets/leaf_disease --epochs 60 --batch_size 32 --optimizer sgd --lr 0.001 --lr_scheduler step --lr_step_size 20 --lr_gamma 0.1 --loss cross_entropy --k_folds 5
+
+# MobileNetV2 with Mish
+python train.py --model mish --data_dir datasets/leaf_disease --epochs 60 --batch_size 32 --optimizer sgd --lr 0.001 --lr_scheduler step --lr_step_size 20 --lr_gamma 0.1 --loss cross_entropy --k_folds 5
+
+# MobileNetV2 with Mish and Triplet Attention
+python train.py --model triplet --data_dir datasets/leaf_disease --epochs 60 --batch_size 32 --optimizer sgd --lr 0.001 --lr_scheduler step --lr_step_size 20 --lr_gamma 0.1 --loss cross_entropy --k_folds 5
+
+# MobileNetV2 with Mish, Triplet Attention, and CNSN
+python train.py --model cnsn --data_dir datasets/leaf_disease --epochs 60 --batch_size 32 --optimizer sgd --lr 0.001 --lr_scheduler step --lr_step_size 20 --lr_gamma 0.1 --loss cross_entropy --k_folds 5
+```
+
+These commands configure:
+- 60 training epochs
+- SGD optimizer with initial learning rate of 0.001
+- Learning rate decay by a factor of 0.1 every 20 epochs
+- Cross-entropy loss function
+- 5-fold cross-validation
 ```
 
 ### Evaluation
