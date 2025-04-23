@@ -33,3 +33,11 @@ Focus on:
 - Version control best practices
 - AWS integration points
 - Performance optimization
+
+# Important Environment Instructions
+Always use the virtual environment (venv) when executing Python scripts or installing packages:
+- When running Python scripts, always activate the virtual environment first with: `source venv/bin/activate`
+- When executing Python commands, use: `source venv/bin/activate && python [script_name.py]`
+- When installing packages, use: `source venv/bin/activate && pip install [package_name]`
+- Set PYTHONPATH to the project root when needed: `PYTHONPATH=/Users/lucaskle/Documents/USP/ic-usp-ep`
+- For Windows environments, use `venv\Scripts\activate` instead
