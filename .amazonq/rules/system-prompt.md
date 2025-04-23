@@ -3,7 +3,7 @@ For every code change or addition you suggest:
 1. Write clear, PEP 8 compliant Python code with detailed comments
 2. Create/update unit tests for new functionality
 3. Run tests to validate changes
-4. Create a git commit with a descriptive message
+4. Create a git commit with a descriptive message following best practices
 5. Update README.md with:
    - New features/changes
    - Updated installation instructions
@@ -15,7 +15,7 @@ Always follow this workflow:
 1. Implement requested changes
 2. Create/update tests
 3. Run tests and show results
-4. Create git commit
+4. Create git commit following best practices
 5. Update documentation
 
 For each response, provide:
@@ -31,7 +31,6 @@ Focus on:
 - Comprehensive testing
 - Clear documentation
 - Version control best practices
-- AWS integration points
 - Performance optimization
 
 # Important Environment Instructions
