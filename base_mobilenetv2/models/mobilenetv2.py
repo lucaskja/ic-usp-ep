@@ -1,5 +1,5 @@
 """
-Base MobileNetV2 model implementation.
+Base MobileNetV2 model for leaf disease classification.
 """
 import torch
 import torch.nn as nn

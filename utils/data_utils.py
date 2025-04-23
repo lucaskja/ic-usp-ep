@@ -3,34 +3,41 @@ Utility functions for data loading and preprocessing.
 """
 import os
 import torch
-import torchvision.transforms as transforms
-from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split
+from torchvision.datasets import ImageFolder
+import torchvision.transforms as transforms
 
 
 def get_transforms(img_size=224):
     """
-    Get standard data transformations for training and validation.
+    Get data transforms for training and validation.
     
     Args:
-        img_size (int): Size to resize images to
+        img_size (int): Size of the input image (default: 224)
         
     Returns:
         tuple: (train_transforms, val_transforms)
     """
+    # Define normalization parameters (ImageNet mean and std)
+    mean = [0.485, 0.456, 0.406]
+    std = [0.229, 0.224, 0.225]
+    
+    # Training transforms with data augmentation
     train_transforms = transforms.Compose([
-        transforms.Resize((img_size, img_size)),
+        transforms.RandomResizedCrop(img_size),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(15),
         transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        transforms.Normalize(mean=mean, std=std)
     ])
     
+    # Validation transforms (no augmentation)
     val_transforms = transforms.Compose([
-        transforms.Resize((img_size, img_size)),
+        transforms.Resize(int(img_size * 1.14)),  # 256 / 224 = 1.14
+        transforms.CenterCrop(img_size),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        transforms.Normalize(mean=mean, std=std)
     ])
     
     return train_transforms, val_transforms
@@ -38,39 +45,50 @@ def get_transforms(img_size=224):
 
 def load_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, num_workers=4):
     """
-    Load and prepare datasets for training and validation.
+    Load dataset from directory.
     
     Args:
         data_dir (str): Path to dataset directory
-        img_size (int): Size to resize images to
-        batch_size (int): Batch size for dataloaders
-        val_split (float): Proportion of data to use for validation
-        num_workers (int): Number of workers for data loading
+        img_size (int): Size of the input image (default: 224)
+        batch_size (int): Batch size (default: 32)
+        val_split (float): Validation split ratio (default: 0.2)
+        num_workers (int): Number of workers for data loading (default: 4)
         
     Returns:
         tuple: (train_loader, val_loader, num_classes)
     """
+    # Get transforms
     train_transforms, val_transforms = get_transforms(img_size)
     
-    # Load the full dataset with training transforms
-    full_dataset = ImageFolder(root=data_dir, transform=train_transforms)
+    # Check if dataset has predefined train/val split
+    train_dir = os.path.join(data_dir, 'train')
+    val_dir = os.path.join(data_dir, 'val')
     
-    # Calculate sizes for train/val split
-    val_size = int(len(full_dataset) * val_split)
-    train_size = len(full_dataset) - val_size
-    
-    # Split the dataset
-    train_dataset, val_dataset = random_split(
-        full_dataset, [train_size, val_size], 
-        generator=torch.Generator().manual_seed(42)
-    )
-    
-    # Update validation set with validation transforms
-    val_dataset.dataset = ImageFolder(root=data_dir, transform=val_transforms)
+    if os.path.exists(train_dir) and os.path.exists(val_dir):
+        # Use predefined split
+        train_dataset = ImageFolder(train_dir, transform=train_transforms)
+        val_dataset = ImageFolder(val_dir, transform=val_transforms)
+    else:
+        # Create split from single directory
+        full_dataset = ImageFolder(data_dir, transform=train_transforms)
+        
+        # Calculate split sizes
+        val_size = int(len(full_dataset) * val_split)
+        train_size = len(full_dataset) - val_size
+        
+        # Split dataset
+        train_dataset, val_dataset = random_split(
+            full_dataset, 
+            [train_size, val_size],
+            generator=torch.Generator().manual_seed(42)  # For reproducibility
+        )
+        
+        # Apply different transforms to validation set
+        val_dataset.dataset = ImageFolder(data_dir, transform=val_transforms)
     
     # Create data loaders
     train_loader = DataLoader(
-        train_dataset, 
+        train_dataset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
@@ -78,13 +96,17 @@ def load_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, num_worke
     )
     
     val_loader = DataLoader(
-        val_dataset, 
+        val_dataset,
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True
     )
     
-    num_classes = len(full_dataset.classes)
+    # Get number of classes
+    if hasattr(train_dataset, 'classes'):
+        num_classes = len(train_dataset.classes)
+    else:
+        num_classes = len(train_dataset.dataset.classes)
     
     return train_loader, val_loader, num_classes

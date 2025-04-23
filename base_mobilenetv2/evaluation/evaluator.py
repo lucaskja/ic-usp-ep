@@ -1,37 +1,43 @@
 """
-Evaluator for base MobileNetV2 model.
+Evaluator for MobileNetV2 model.
 """
 import torch
+import torch.nn as nn
 import numpy as np
-from tqdm import tqdm
-from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.metrics import classification_report, confusion_matrix
 
 
 class MobileNetV2Evaluator:
     """
-    Evaluator class for MobileNetV2 model.
+    Evaluator for MobileNetV2 model.
     """
-    def __init__(self, model, data_loader, device):
+    def __init__(self, model, val_loader, device):
         """
         Initialize evaluator.
         
         Args:
             model (nn.Module): Model to evaluate
-            data_loader (DataLoader): Data loader for evaluation
-            device (torch.device): Device to evaluate on
+            val_loader (DataLoader): Validation data loader
+            device (torch.device): Device to use
         """
-        self.model = model
-        self.data_loader = data_loader
+        self.model = model.to(device)
+        self.val_loader = val_loader
         self.device = device
+        self.criterion = nn.CrossEntropyLoss()
         
-        # Move model to device
-        self.model = self.model.to(self.device)
-        
+        # Get class names from dataset
+        if hasattr(val_loader.dataset, 'classes'):
+            self.class_names = val_loader.dataset.classes
+        elif hasattr(val_loader.dataset, 'dataset') and hasattr(val_loader.dataset.dataset, 'classes'):
+            self.class_names = val_loader.dataset.dataset.classes
+        else:
+            self.class_names = [str(i) for i in range(model.model.classifier[1].out_features)]
+    
     def evaluate(self):
         """
-        Evaluate the model.
+        Evaluate model on validation set.
         
         Returns:
             dict: Evaluation results
@@ -40,36 +46,58 @@ class MobileNetV2Evaluator:
         
         all_preds = []
         all_targets = []
+        running_loss = 0.0
+        running_corrects = 0
+        total_samples = 0
         
         with torch.no_grad():
-            for images, targets in tqdm(self.data_loader, desc="Evaluating"):
-                images = images.to(self.device)
+            for inputs, targets in self.val_loader:
+                inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
                 
-                outputs = self.model(images)
+                # Forward pass
+                outputs = self.model(inputs)
+                loss = self.criterion(outputs, targets)
+                
+                # Get predictions
                 _, preds = torch.max(outputs, 1)
                 
+                # Update metrics
+                running_loss += loss.item() * inputs.size(0)
+                running_corrects += torch.sum(preds == targets).item()
+                total_samples += inputs.size(0)
+                
+                # Store predictions and targets for later analysis
                 all_preds.extend(preds.cpu().numpy())
                 all_targets.extend(targets.cpu().numpy())
+        
+        # Calculate metrics
+        accuracy = 100.0 * running_corrects / total_samples
+        loss = running_loss / total_samples
         
         # Convert to numpy arrays
         all_preds = np.array(all_preds)
         all_targets = np.array(all_targets)
         
-        # Calculate metrics
-        class_names = self.data_loader.dataset.dataset.classes if hasattr(self.data_loader.dataset, 'dataset') else None
-        report = classification_report(all_targets, all_preds, target_names=class_names, output_dict=True)
+        # Calculate confusion matrix
         cm = confusion_matrix(all_targets, all_preds)
         
-        # Calculate accuracy
-        accuracy = (all_preds == all_targets).mean() * 100
+        # Calculate classification report
+        report = classification_report(
+            all_targets, 
+            all_preds, 
+            target_names=self.class_names,
+            output_dict=True
+        )
         
         return {
             'accuracy': accuracy,
-            'report': report,
+            'loss': loss,
             'confusion_matrix': cm,
+            'report': report,
             'predictions': all_preds,
-            'targets': all_targets
+            'targets': all_targets,
+            'class_names': self.class_names
         }
     
     def plot_confusion_matrix(self, results, save_path=None):
@@ -78,64 +106,64 @@ class MobileNetV2Evaluator:
         
         Args:
             results (dict): Evaluation results
-            save_path (str, optional): Path to save the plot
+            save_path (str): Path to save the plot
         """
         cm = results['confusion_matrix']
-        class_names = self.data_loader.dataset.dataset.classes if hasattr(self.data_loader.dataset, 'dataset') else None
+        class_names = results['class_names']
         
         plt.figure(figsize=(10, 8))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                    xticklabels=class_names, yticklabels=class_names)
+        sns.heatmap(
+            cm, 
+            annot=True, 
+            fmt='d', 
+            cmap='Blues',
+            xticklabels=class_names,
+            yticklabels=class_names
+        )
         plt.xlabel('Predicted')
         plt.ylabel('True')
         plt.title('Confusion Matrix')
         
         if save_path:
             plt.savefig(save_path)
-        
-        plt.show()
+            plt.close()
+        else:
+            plt.show()
     
     def plot_metrics(self, results, save_path=None):
         """
-        Plot evaluation metrics.
+        Plot metrics from classification report.
         
         Args:
             results (dict): Evaluation results
-            save_path (str, optional): Path to save the plot
+            save_path (str): Path to save the plot
         """
         report = results['report']
+        class_names = results['class_names']
         
-        # Extract metrics
-        classes = []
-        precision = []
-        recall = []
-        f1_score = []
+        # Extract metrics for each class
+        precision = [report[cls]['precision'] for cls in class_names]
+        recall = [report[cls]['recall'] for cls in class_names]
+        f1_score = [report[cls]['f1-score'] for cls in class_names]
         
-        for cls, metrics in report.items():
-            if cls not in ['accuracy', 'macro avg', 'weighted avg']:
-                classes.append(cls)
-                precision.append(metrics['precision'])
-                recall.append(metrics['recall'])
-                f1_score.append(metrics['f1-score'])
-        
-        # Plot
-        x = np.arange(len(classes))
+        # Create plot
+        plt.figure(figsize=(12, 6))
+        x = np.arange(len(class_names))
         width = 0.25
         
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.bar(x - width, precision, width, label='Precision')
-        ax.bar(x, recall, width, label='Recall')
-        ax.bar(x + width, f1_score, width, label='F1-score')
+        plt.bar(x - width, precision, width, label='Precision')
+        plt.bar(x, recall, width, label='Recall')
+        plt.bar(x + width, f1_score, width, label='F1-score')
         
-        ax.set_ylabel('Score')
-        ax.set_title('Metrics by Class')
-        ax.set_xticks(x)
-        ax.set_xticklabels(classes, rotation=45, ha='right')
-        ax.legend()
-        
+        plt.xlabel('Class')
+        plt.ylabel('Score')
+        plt.title('Classification Metrics')
+        plt.xticks(x, class_names, rotation=45, ha='right')
+        plt.legend()
         plt.tight_layout()
         
         if save_path:
             plt.savefig(save_path)
-        
-        plt.show()
+            plt.close()
+        else:
+            plt.show()
