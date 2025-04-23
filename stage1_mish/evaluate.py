@@ -11,8 +11,12 @@ import seaborn as sns
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 
-from stage1_mish.models.mobilenetv2_mish import MobileNetV2MishModel
+from models.mobilenetv2_mish import MobileNetV2MishModel
+import sys
+sys.path.append('..')  # Add parent directory to path
 from utils.data_utils import load_dataset
+from utils.model_utils import get_model_size, print_model_summary
+from utils.training_utils import setup_logging
 from base_mobilenetv2.evaluation.evaluator import MobileNetV2Evaluator
 from base_mobilenetv2.configs.default_config import DATA_CONFIG
 
@@ -30,6 +34,8 @@ def parse_args():
                         help='Batch size (default: from config)')
     parser.add_argument('--no_cuda', action='store_true',
                         help='Disable CUDA')
+    parser.add_argument('--debug', action='store_true',
+                        help='Run in debug mode with smaller dataset')
     
     return parser.parse_args()
 
@@ -37,6 +43,9 @@ def parse_args():
 def main():
     """Main evaluation function."""
     args = parse_args()
+    
+    # Set up logging
+    setup_logging('stage1_mish_eval', 'logs')
     
     # Set device
     use_cuda = not args.no_cuda and torch.cuda.is_available()
@@ -52,7 +61,8 @@ def main():
         img_size=DATA_CONFIG['img_size'],
         batch_size=args.batch_size or DATA_CONFIG['batch_size'],
         val_split=DATA_CONFIG['val_split'],
-        num_workers=DATA_CONFIG['num_workers']
+        num_workers=DATA_CONFIG['num_workers'],
+        debug=args.debug
     )
     print(f"Dataset loaded with {num_classes} classes")
     
@@ -63,6 +73,14 @@ def main():
     checkpoint = torch.load(args.checkpoint, map_location=device)
     model.load_state_dict(checkpoint['state_dict'])
     print(f"Loaded checkpoint from {args.checkpoint}")
+    
+    # Print model summary
+    print_model_summary(model)
+    model_size_mb = get_model_size(model)
+    print(f"Model Size: {model_size_mb:.2f} MB")
+    
+    # Move model to device
+    model = model.to(device)
     
     # Create evaluator
     evaluator = MobileNetV2Evaluator(model, val_loader, device)
@@ -89,6 +107,7 @@ def main():
     report_path = os.path.join(args.output_dir, 'classification_report.txt')
     with open(report_path, 'w') as f:
         f.write(f"Model: MobileNetV2 with Mish\n")
+        f.write(f"Model Size: {model_size_mb:.2f} MB\n")
         f.write(f"Accuracy: {results['accuracy']:.2f}%\n\n")
         f.write("Classification Report:\n")
         for cls, metrics in report.items():
