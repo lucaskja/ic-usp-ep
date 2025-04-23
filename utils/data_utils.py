@@ -3,9 +3,10 @@ Utility functions for data loading and preprocessing.
 """
 import os
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, Subset
 from torchvision.datasets import ImageFolder
 import torchvision.transforms as transforms
+import logging
 
 
 def get_transforms(img_size=224):
@@ -43,7 +44,7 @@ def get_transforms(img_size=224):
     return train_transforms, val_transforms
 
 
-def load_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, num_workers=4):
+def load_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, num_workers=4, debug=False):
     """
     Load dataset from directory.
     
@@ -53,6 +54,7 @@ def load_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, num_worke
         batch_size (int): Batch size (default: 32)
         val_split (float): Validation split ratio (default: 0.2)
         num_workers (int): Number of workers for data loading (default: 4)
+        debug (bool): If True, use a small subset of data for debugging
         
     Returns:
         tuple: (train_loader, val_loader, num_classes)
@@ -86,6 +88,17 @@ def load_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, num_worke
         # Apply different transforms to validation set
         val_dataset.dataset = ImageFolder(data_dir, transform=val_transforms)
     
+    # If in debug mode, use only a small subset of the data
+    if debug:
+        logging.info("Running in debug mode with reduced dataset size")
+        train_indices = list(range(min(100, len(train_dataset))))
+        val_indices = list(range(min(50, len(val_dataset))))
+        
+        train_dataset = Subset(train_dataset, train_indices)
+        val_dataset = Subset(val_dataset, val_indices)
+        
+        logging.info(f"Debug dataset sizes: {len(train_dataset)} training, {len(val_dataset)} validation")
+    
     # Create data loaders
     train_loader = DataLoader(
         train_dataset,
@@ -106,7 +119,20 @@ def load_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, num_worke
     # Get number of classes
     if hasattr(train_dataset, 'classes'):
         num_classes = len(train_dataset.classes)
-    else:
+    elif hasattr(train_dataset, 'dataset') and hasattr(train_dataset.dataset, 'classes'):
         num_classes = len(train_dataset.dataset.classes)
+    else:
+        # If classes attribute is not available, infer from the data
+        if hasattr(train_dataset, 'targets'):
+            num_classes = len(set(train_dataset.targets))
+        elif hasattr(train_dataset.dataset, 'targets'):
+            num_classes = len(set(train_dataset.dataset.targets))
+        else:
+            # Default to 1000 (ImageNet) if we can't determine
+            num_classes = 1000
+            logging.warning("Could not determine number of classes, defaulting to 1000")
+    
+    logging.info(f"Dataset loaded: {len(train_dataset)} training samples, {len(val_dataset)} validation samples")
+    logging.info(f"Number of classes: {num_classes}")
     
     return train_loader, val_loader, num_classes
