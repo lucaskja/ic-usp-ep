@@ -158,9 +158,9 @@ def main():
         
         # Store results
         train_losses.append(train_metrics['loss'])
-        train_accs.append(train_metrics['acc1'].item())
+        train_accs.append(train_metrics['acc1'])
         val_losses.append(val_metrics['loss'])
-        val_accs.append(val_metrics['acc1'].item())
+        val_accs.append(val_metrics['acc1'])
         
         # Save checkpoint
         is_best = val_metrics['acc1'] > best_acc
