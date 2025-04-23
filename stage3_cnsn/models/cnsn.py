@@ -11,113 +11,136 @@ import torch.nn.functional as F
 
 class CrossNorm(nn.Module):
     """
-    CrossNorm module.
+    CrossNorm module for enlarging training distribution.
     
     Exchanges channel-wise mean and variance between feature maps.
     """
-    def __init__(self, mode='1-instance'):
+    def __init__(self, mode='2-instance', p=0.5, crop_size=None):
         """
         Initialize CrossNorm module.
         
         Args:
-            mode (str): Mode for CrossNorm operation
-                '1-instance': Exchange between channels within same instance
-                '2-instance': Exchange between corresponding channels of different instances
-                'crop': Apply to specific spatial regions
+            mode (str): Mode of operation:
+                - '1-instance': Exchange between channels within same instance
+                - '2-instance': Exchange between corresponding channels of different instances
+                - 'crop': Apply to specific spatial regions
+            p (float): Probability of applying CrossNorm during training
+            crop_size (tuple): Size of crop region for 'crop' mode (H, W)
         """
         super(CrossNorm, self).__init__()
+        assert mode in ['1-instance', '2-instance', 'crop'], f"Invalid mode: {mode}"
         self.mode = mode
-        
+        self.p = p
+        self.crop_size = crop_size
+    
     def forward(self, x):
         """
         Forward pass.
         
         Args:
-            x (torch.Tensor): Input tensor of shape (B, C, H, W)
+            x (torch.Tensor): Input tensor of shape [B, C, H, W]
             
         Returns:
-            torch.Tensor: Output tensor of shape (B, C, H, W)
+            torch.Tensor: Output tensor with same shape as input
         """
-        if not self.training:
+        # Only apply during training with probability p
+        if not self.training or torch.rand(1).item() > self.p:
             return x
         
-        B, C, H, W = x.shape
+        B, C, H, W = x.size()
         
         if self.mode == '1-instance':
-            # Compute mean and std for each channel
-            mean = x.mean(dim=[2, 3], keepdim=True)  # (B, C, 1, 1)
-            std = torch.sqrt(x.var(dim=[2, 3], keepdim=True) + 1e-5)  # (B, C, 1, 1)
+            # Randomly permute channels within each instance
+            perm_indices = torch.randperm(C)
+            mean = x.mean(dim=[2, 3], keepdim=True)  # [B, C, 1, 1]
+            std = torch.sqrt(x.var(dim=[2, 3], keepdim=True) + 1e-5)  # [B, C, 1, 1]
             
-            # Shuffle mean and std across channels
-            perm_idx = torch.randperm(C)
-            mean_perm = mean[:, perm_idx]
-            std_perm = std[:, perm_idx]
+            # Get permuted statistics
+            mean_perm = mean[:, perm_indices]
+            std_perm = std[:, perm_indices]
             
-            # Normalize and denormalize with shuffled stats
+            # Normalize and denormalize with permuted statistics
             x_norm = (x - mean) / std
-            x_norm = x_norm * std_perm + mean_perm
+            x_crossnorm = x_norm * std_perm + mean_perm
+            
+            return x_crossnorm
             
         elif self.mode == '2-instance':
             if B <= 1:
-                return x
+                return x  # Need at least 2 instances
                 
-            # Compute mean and std for each channel
-            mean = x.mean(dim=[2, 3], keepdim=True)  # (B, C, 1, 1)
-            std = torch.sqrt(x.var(dim=[2, 3], keepdim=True) + 1e-5)  # (B, C, 1, 1)
+            # Shuffle batch indices
+            perm_indices = torch.randperm(B)
             
-            # Shuffle mean and std across instances
-            perm_idx = torch.randperm(B)
-            mean_perm = mean[perm_idx]
-            std_perm = std[perm_idx]
+            mean = x.mean(dim=[2, 3], keepdim=True)  # [B, C, 1, 1]
+            std = torch.sqrt(x.var(dim=[2, 3], keepdim=True) + 1e-5)  # [B, C, 1, 1]
             
-            # Normalize and denormalize with shuffled stats
+            # Get statistics from shuffled batch
+            mean_perm = mean[perm_indices]
+            std_perm = std[perm_indices]
+            
+            # Normalize and denormalize with shuffled statistics
             x_norm = (x - mean) / std
-            x_norm = x_norm * std_perm + mean_perm
+            x_crossnorm = x_norm * std_perm + mean_perm
+            
+            return x_crossnorm
             
         elif self.mode == 'crop':
+            if self.crop_size is None:
+                crop_h, crop_w = H // 2, W // 2
+            else:
+                crop_h, crop_w = self.crop_size
+                
+            # Ensure crop size is valid
+            if H <= crop_h or W <= crop_w:
+                return x  # Skip if crop size is too large
+                
             # Randomly select crop region
-            crop_size = min(H, W) // 2
-            top = torch.randint(0, H - crop_size + 1, (1,)).item()
-            left = torch.randint(0, W - crop_size + 1, (1,)).item()
+            h_start = torch.randint(0, H - crop_h + 1, (1,)).item()
+            w_start = torch.randint(0, W - crop_w + 1, (1,)).item()
             
-            # Extract crop
-            crop = x[:, :, top:top+crop_size, left:left+crop_size]
+            # Extract crop region
+            crop = x[:, :, h_start:h_start+crop_h, w_start:w_start+crop_w]
             
-            # Compute mean and std for crop
-            crop_mean = crop.mean(dim=[2, 3], keepdim=True)  # (B, C, 1, 1)
-            crop_std = torch.sqrt(crop.var(dim=[2, 3], keepdim=True) + 1e-5)  # (B, C, 1, 1)
+            # Compute statistics for crop region
+            crop_mean = crop.mean(dim=[2, 3], keepdim=True)  # [B, C, 1, 1]
+            crop_std = torch.sqrt(crop.var(dim=[2, 3], keepdim=True) + 1e-5)  # [B, C, 1, 1]
             
-            # Shuffle mean and std across channels
-            perm_idx = torch.randperm(C)
-            crop_mean_perm = crop_mean[:, perm_idx]
-            crop_std_perm = crop_std[:, perm_idx]
-            
-            # Apply to original tensor
-            x_norm = x.clone()
-            x_norm[:, :, top:top+crop_size, left:left+crop_size] = (
-                (crop - crop_mean) / crop_std * crop_std_perm + crop_mean_perm
-            )
-            
-        else:
-            raise ValueError(f"Unknown CrossNorm mode: {self.mode}")
-            
-        return x_norm
+            # Shuffle batch indices for crop statistics
+            if B > 1:  # Need at least 2 instances for shuffling
+                perm_indices = torch.randperm(B)
+                crop_mean_perm = crop_mean[perm_indices]
+                crop_std_perm = crop_std[perm_indices]
+                
+                # Apply CrossNorm only to crop region
+                x_result = x.clone()
+                crop_norm = (crop - crop_mean) / crop_std
+                crop_crossnorm = crop_norm * crop_std_perm + crop_mean_perm
+                
+                # Replace crop region with CrossNorm result
+                x_result[:, :, h_start:h_start+crop_h, w_start:w_start+crop_w] = crop_crossnorm
+                
+                return x_result
+            else:
+                return x  # Skip if batch size is 1
 
 
 class SelfNorm(nn.Module):
     """
-    SelfNorm module.
+    SelfNorm module for bridging train-test distribution gap.
     
     Recalibrates statistics using attention mechanism.
     """
-    def __init__(self, num_channels):
+    def __init__(self, num_features, eps=1e-5):
         """
         Initialize SelfNorm module.
         
         Args:
-            num_channels (int): Number of input channels
+            num_features (int): Number of input channels
+            eps (float): Small constant for numerical stability
         """
         super(SelfNorm, self).__init__()
+        self.eps = eps
         
         # Two FC networks for attention functions f and g
         self.f_fc = nn.Sequential(
@@ -131,81 +154,80 @@ class SelfNorm(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(32, 1)
         )
-        
+    
     def forward(self, x):
         """
         Forward pass.
         
         Args:
-            x (torch.Tensor): Input tensor of shape (B, C, H, W)
+            x (torch.Tensor): Input tensor of shape [B, C, H, W]
             
         Returns:
-            torch.Tensor: Output tensor of shape (B, C, H, W)
+            torch.Tensor: Output tensor with same shape as input
         """
-        B, C, H, W = x.shape
+        B, C, H, W = x.size()
         
-        # Compute mean and std for each channel
-        mean = x.mean(dim=[2, 3])  # (B, C)
-        std = torch.sqrt(x.var(dim=[2, 3]) + 1e-5)  # (B, C)
+        # Compute mean and standard deviation
+        mean = x.mean(dim=[2, 3])  # [B, C]
+        std = torch.sqrt(x.var(dim=[2, 3]) + self.eps)  # [B, C]
         
-        # Stack mean and std for FC input
-        stats = torch.stack([mean, std], dim=2)  # (B, C, 2)
+        # Concatenate mean and std for each channel
+        mean_std = torch.stack([mean, std], dim=2)  # [B, C, 2]
         
-        # Apply attention functions
-        f_out = self.f_fc(stats).squeeze(-1)  # (B, C)
-        g_out = self.g_fc(stats).squeeze(-1)  # (B, C)
+        # Compute attention weights for mean and std
+        f_weights = self.f_fc(mean_std).squeeze(2)  # [B, C]
+        g_weights = self.g_fc(mean_std).squeeze(2)  # [B, C]
         
-        # Apply softmax to get attention weights
-        f_attn = F.softmax(f_out, dim=1)  # (B, C)
-        g_attn = F.softmax(g_out, dim=1)  # (B, C)
+        # Apply softmax to get normalized weights
+        f_weights = F.softmax(f_weights, dim=1)  # [B, C]
+        g_weights = F.softmax(g_weights, dim=1)  # [B, C]
         
         # Compute weighted mean and std
-        mean_attn = torch.sum(mean * f_attn, dim=1, keepdim=True)  # (B, 1)
-        std_attn = torch.sum(std * g_attn, dim=1, keepdim=True)  # (B, 1)
+        mean_weighted = torch.sum(f_weights.unsqueeze(2).unsqueeze(3) * mean.unsqueeze(2).unsqueeze(3), dim=1, keepdim=True)  # [B, 1, 1, 1]
+        std_weighted = torch.sum(g_weights.unsqueeze(2).unsqueeze(3) * std.unsqueeze(2).unsqueeze(3), dim=1, keepdim=True)  # [B, 1, 1, 1]
         
-        # Reshape for broadcasting
-        mean_attn = mean_attn.view(B, 1, 1, 1)
-        std_attn = std_attn.view(B, 1, 1, 1)
+        # Normalize and denormalize with weighted statistics
+        x_norm = (x - mean.unsqueeze(2).unsqueeze(3)) / std.unsqueeze(2).unsqueeze(3)
+        x_selfnorm = x_norm * std_weighted + mean_weighted
         
-        # Normalize and denormalize with attended stats
-        x_norm = (x - mean.view(B, C, 1, 1)) / std.view(B, C, 1, 1)
-        x_norm = x_norm * std_attn + mean_attn
-        
-        return x_norm
+        return x_selfnorm
 
 
 class CNSN(nn.Module):
     """
     CNSN (CrossNorm and SelfNorm) module.
     
-    Combines CrossNorm and SelfNorm modules.
+    Combines CrossNorm for training distribution expansion and
+    SelfNorm for bridging train-test distribution gap.
     """
-    def __init__(self, num_channels, cn_mode='1-instance'):
+    def __init__(self, num_features, crossnorm_mode='2-instance', p=0.5, crop_size=None):
         """
         Initialize CNSN module.
         
         Args:
-            num_channels (int): Number of input channels
-            cn_mode (str): Mode for CrossNorm operation
+            num_features (int): Number of input channels
+            crossnorm_mode (str): Mode for CrossNorm
+            p (float): Probability of applying CrossNorm during training
+            crop_size (tuple): Size of crop region for 'crop' mode
         """
         super(CNSN, self).__init__()
-        self.cross_norm = CrossNorm(mode=cn_mode)
-        self.self_norm = SelfNorm(num_channels)
-        
+        self.crossnorm = CrossNorm(mode=crossnorm_mode, p=p, crop_size=crop_size)
+        self.selfnorm = SelfNorm(num_features)
+    
     def forward(self, x):
         """
         Forward pass.
         
         Args:
-            x (torch.Tensor): Input tensor of shape (B, C, H, W)
+            x (torch.Tensor): Input tensor
             
         Returns:
-            torch.Tensor: Output tensor of shape (B, C, H, W)
+            torch.Tensor: Output tensor
         """
         # Apply CrossNorm (only during training)
-        x_cn = self.cross_norm(x)
+        x = self.crossnorm(x)
         
-        # Apply SelfNorm (during both training and testing)
-        x_sn = self.self_norm(x_cn)
+        # Apply SelfNorm (both training and testing)
+        x = self.selfnorm(x)
         
-        return x_sn
+        return x

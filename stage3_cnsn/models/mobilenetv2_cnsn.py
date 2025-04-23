@@ -5,54 +5,29 @@ import torch
 import torch.nn as nn
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
 
-from mobilenetv2_improvements.stage1_mish.models.mish import replace_relu_with_mish
-from mobilenetv2_improvements.stage2_triplet.models.triplet_attention import TripletAttention
-from mobilenetv2_improvements.stage3_cnsn.models.cnsn import CNSN
+from stage1_mish.models.mish import replace_relu_with_mish
+from stage2_triplet.models.triplet_attention import TripletAttention
+from stage3_cnsn.models.cnsn import CNSN
 
 
-class InvertedResidualWithTripletAndCNSN(nn.Module):
+class InvertedResidualWithTripletAttentionAndCNSN(nn.Module):
     """
     Inverted Residual block with Triplet Attention and CNSN.
     """
-    def __init__(self, inverted_residual_block, use_triplet=True, use_cnsn=True, 
-                 triplet_kernel_size=7, cn_mode='1-instance'):
+    def __init__(self, inverted_residual_block, num_channels):
         """
-        Initialize Inverted Residual block with Triplet Attention and CNSN.
+        Initialize wrapper for inverted residual block.
         
         Args:
-            inverted_residual_block (nn.Module): Original inverted residual block
-            use_triplet (bool): Whether to use triplet attention
-            use_cnsn (bool): Whether to use CNSN
-            triplet_kernel_size (int): Kernel size for triplet attention
-            cn_mode (str): Mode for CrossNorm operation
+            inverted_residual_block: Original inverted residual block
+            num_channels (int): Number of output channels
         """
-        super(InvertedResidualWithTripletAndCNSN, self).__init__()
-        self.inverted_block = inverted_residual_block
-        self.use_triplet = use_triplet
-        self.use_cnsn = use_cnsn
-        
-        # Get number of output channels from inverted residual block
-        # This is a bit hacky but works for MobileNetV2's implementation
-        if hasattr(inverted_residual_block, 'conv'):
-            if hasattr(inverted_residual_block.conv, 'layers'):
-                # Find the last conv layer to get output channels
-                for layer in reversed(inverted_residual_block.conv.layers):
-                    if isinstance(layer, nn.Conv2d):
-                        out_channels = layer.out_channels
-                        break
-            else:
-                # Fallback to a default value
-                out_channels = 32
-        else:
-            # Fallback to a default value
-            out_channels = 32
-        
-        if use_triplet:
-            self.triplet_attention = TripletAttention(kernel_size=triplet_kernel_size)
-        
-        if use_cnsn:
-            self.cnsn = CNSN(num_channels=out_channels, cn_mode=cn_mode)
-        
+        super(InvertedResidualWithTripletAttentionAndCNSN, self).__init__()
+        self.block = inverted_residual_block
+        self.attention = TripletAttention(kernel_size=7)
+        self.cnsn = CNSN(num_channels, crossnorm_mode='2-instance', p=0.5)
+        self.use_res_connect = self.block.use_res_connect
+    
     def forward(self, x):
         """
         Forward pass.
@@ -63,28 +38,57 @@ class InvertedResidualWithTripletAndCNSN(nn.Module):
         Returns:
             torch.Tensor: Output tensor
         """
-        x = self.inverted_block(x)
-        
-        if self.use_triplet:
-            x = self.triplet_attention(x)
-        
-        if self.use_cnsn:
-            x = self.cnsn(x)
-        
-        return x
+        if self.use_res_connect:
+            out = self.block.conv(x)
+            out = self.attention(out)
+            out = self.cnsn(out)
+            return x + out
+        else:
+            out = self.block(x)
+            out = self.attention(out)
+            out = self.cnsn(out)
+            return out
 
 
-def add_triplet_and_cnsn_to_mobilenetv2(model, use_triplet=True, use_cnsn=True, 
-                                        triplet_kernel_size=7, cn_mode='1-instance'):
+def get_output_channels(layer):
+    """
+    Get the number of output channels from a layer.
+    
+    Args:
+        layer (nn.Module): Layer to analyze
+        
+    Returns:
+        int: Number of output channels
+    """
+    # For inverted residual blocks with residual connection
+    if hasattr(layer, 'conv'):
+        # Navigate through the conv sequential to find the last conv layer
+        for m in reversed(list(layer.conv.modules())):
+            if hasattr(m, 'out_channels'):
+                return m.out_channels
+    
+    # For other blocks, try to find the last layer with out_channels
+    for m in reversed(list(layer.modules())):
+        if hasattr(m, 'out_channels'):
+            return m.out_channels
+    
+    # Fallback: try to infer from the output shape
+    with torch.no_grad():
+        dummy_input = torch.randn(1, 3, 224, 224)
+        try:
+            output = layer(dummy_input)
+            return output.shape[1]  # Channels dimension
+        except:
+            # If all else fails, use a default value
+            return 32
+
+
+def add_triplet_attention_and_cnsn_to_mobilenetv2(model):
     """
     Add Triplet Attention and CNSN to MobileNetV2 model.
     
     Args:
         model (nn.Module): MobileNetV2 model
-        use_triplet (bool): Whether to use triplet attention
-        use_cnsn (bool): Whether to use CNSN
-        triplet_kernel_size (int): Kernel size for triplet attention
-        cn_mode (str): Mode for CrossNorm operation
         
     Returns:
         nn.Module: MobileNetV2 model with Triplet Attention and CNSN
@@ -92,52 +96,34 @@ def add_triplet_and_cnsn_to_mobilenetv2(model, use_triplet=True, use_cnsn=True,
     # Add Triplet Attention and CNSN after each inverted residual block
     for i, layer in enumerate(model.features):
         if hasattr(layer, 'conv'):  # Check if it's an inverted residual block
-            model.features[i] = InvertedResidualWithTripletAndCNSN(
-                layer, 
-                use_triplet=use_triplet, 
-                use_cnsn=use_cnsn,
-                triplet_kernel_size=triplet_kernel_size,
-                cn_mode=cn_mode
-            )
+            # Get number of output channels
+            num_channels = get_output_channels(layer)
+            model.features[i] = InvertedResidualWithTripletAttentionAndCNSN(layer, num_channels)
     
     return model
 
 
-def create_mobilenetv2_cnsn(num_classes, pretrained=True, use_mish=True, 
-                           use_triplet=True, use_cnsn=True, 
-                           triplet_kernel_size=7, cn_mode='1-instance'):
+def create_mobilenetv2_cnsn(num_classes, pretrained=True):
     """
     Create a MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
     
     Args:
         num_classes (int): Number of output classes
         pretrained (bool): Whether to use pretrained weights
-        use_mish (bool): Whether to use Mish activation
-        use_triplet (bool): Whether to use Triplet Attention
-        use_cnsn (bool): Whether to use CNSN
-        triplet_kernel_size (int): Kernel size for triplet attention
-        cn_mode (str): Mode for CrossNorm operation
         
     Returns:
-        nn.Module: MobileNetV2 model with Mish activation, Triplet Attention, and CNSN
+        nn.Module: MobileNetV2 model with Mish, Triplet Attention, and CNSN
     """
     if pretrained:
         model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
     else:
         model = mobilenet_v2(weights=None)
     
-    # Replace ReLU6 with Mish if specified
-    if use_mish:
-        model = replace_relu_with_mish(model)
+    # Replace ReLU6 with Mish
+    model = replace_relu_with_mish(model)
     
     # Add Triplet Attention and CNSN
-    model = add_triplet_and_cnsn_to_mobilenetv2(
-        model, 
-        use_triplet=use_triplet, 
-        use_cnsn=use_cnsn,
-        triplet_kernel_size=triplet_kernel_size,
-        cn_mode=cn_mode
-    )
+    model = add_triplet_attention_and_cnsn_to_mobilenetv2(model)
     
     # Modify the classifier for our number of classes
     in_features = model.classifier[1].in_features
@@ -153,31 +139,16 @@ class MobileNetV2CNSNModel(nn.Module):
     """
     Wrapper class for MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
     """
-    def __init__(self, num_classes, pretrained=True, use_mish=True, 
-                use_triplet=True, use_cnsn=True, 
-                triplet_kernel_size=7, cn_mode='1-instance'):
+    def __init__(self, num_classes, pretrained=True):
         """
         Initialize MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
         
         Args:
             num_classes (int): Number of output classes
             pretrained (bool): Whether to use pretrained weights
-            use_mish (bool): Whether to use Mish activation
-            use_triplet (bool): Whether to use Triplet Attention
-            use_cnsn (bool): Whether to use CNSN
-            triplet_kernel_size (int): Kernel size for triplet attention
-            cn_mode (str): Mode for CrossNorm operation
         """
         super(MobileNetV2CNSNModel, self).__init__()
-        self.model = create_mobilenetv2_cnsn(
-            num_classes, 
-            pretrained=pretrained, 
-            use_mish=use_mish,
-            use_triplet=use_triplet,
-            use_cnsn=use_cnsn,
-            triplet_kernel_size=triplet_kernel_size,
-            cn_mode=cn_mode
-        )
+        self.model = create_mobilenetv2_cnsn(num_classes, pretrained)
         
     def forward(self, x):
         """
