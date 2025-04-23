@@ -46,7 +46,7 @@ def accuracy(output, target, topk=(1,)):
         list: List of top-k accuracies
     """
     with torch.no_grad():
-        maxk = max(topk)
+        maxk = min(max(topk), output.size(1))  # Ensure k doesn't exceed number of classes
         batch_size = target.size(0)
 
         _, pred = output.topk(maxk, 1, True, True)
@@ -55,8 +55,13 @@ def accuracy(output, target, topk=(1,)):
 
         res = []
         for k in topk:
-            correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
-            res.append(correct_k.mul_(100.0 / batch_size))
+            if k <= maxk:
+                correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
+                res.append(correct_k.mul_(100.0 / batch_size))
+            else:
+                # If k exceeds number of classes, use the max available k
+                correct_k = correct[:maxk].reshape(-1).float().sum(0, keepdim=True)
+                res.append(correct_k.mul_(100.0 / batch_size))
         return res
 
 
