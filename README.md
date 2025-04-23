@@ -83,6 +83,34 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### GPU Acceleration Setup (Windows with NVIDIA GPUs)
+
+For faster training with NVIDIA GPUs (e.g., RTX 4060 Ti):
+
+1. Install CUDA Toolkit and cuDNN:
+   - Download and install [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) (11.8 or 12.1 recommended)
+   - Download and install [cuDNN](https://developer.nvidia.com/cudnn) (requires free NVIDIA account)
+
+2. Install GPU-enabled PyTorch:
+```bash
+# Activate your virtual environment first
+venv\Scripts\activate
+
+# For CUDA 11.8
+pip uninstall torch torchvision
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+
+# For CUDA 12.1
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+```
+
+3. Verify GPU detection:
+```bash
+# Create and run a test script
+echo "import torch; print(f'CUDA available: {torch.cuda.is_available()}'); print(f'Device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"CPU\"}')" > test_gpu.py
+python test_gpu.py
+```
+
 ### Dataset Preparation
 
 1. Download a leaf disease dataset (e.g., Plant Village, PlantDoc)
@@ -112,6 +140,28 @@ source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disea
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
 cd stage3_cnsn
 source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001
+```
+
+#### Windows GPU Training Commands
+
+For Windows with GPU acceleration:
+
+```bash
+# Base MobileNetV2 with GPU
+cd base_mobilenetv2
+venv\Scripts\activate && python train.py --data_dir ..\datasets\leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
+
+# MobileNetV2 with Mish
+cd stage1_mish
+venv\Scripts\activate && python train.py --data_dir ..\datasets\leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
+
+# MobileNetV2 with Mish and Triplet Attention
+cd stage2_triplet
+venv\Scripts\activate && python train.py --data_dir ..\datasets\leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
+
+# MobileNetV2 with Mish, Triplet Attention, and CNSN
+cd stage3_cnsn
+venv\Scripts\activate && python train.py --data_dir ..\datasets\leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
 ```
 
 #### Advanced Training with SGD and Learning Rate Decay
@@ -172,6 +222,26 @@ source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_di
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
 cd stage3_cnsn
 source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth
+```
+
+#### Windows GPU Evaluation Commands
+
+```bash
+# Base MobileNetV2 with GPU
+cd base_mobilenetv2
+venv\Scripts\activate && python evaluate.py --data_dir ..\datasets\leaf_disease\test --checkpoint checkpoints\best.pth --device cuda
+
+# MobileNetV2 with Mish
+cd stage1_mish
+venv\Scripts\activate && python evaluate.py --data_dir ..\datasets\leaf_disease\test --checkpoint checkpoints\best.pth --device cuda
+
+# MobileNetV2 with Mish and Triplet Attention
+cd stage2_triplet
+venv\Scripts\activate && python evaluate.py --data_dir ..\datasets\leaf_disease\test --checkpoint checkpoints\best.pth --device cuda
+
+# MobileNetV2 with Mish, Triplet Attention, and CNSN
+cd stage3_cnsn
+venv\Scripts\activate && python evaluate.py --data_dir ..\datasets\leaf_disease\test --checkpoint checkpoints\best.pth --device cuda
 ```
 
 ### Visualization and Analysis
