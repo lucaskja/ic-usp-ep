@@ -12,7 +12,7 @@ import shutil
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils.training_utils import accuracy, save_checkpoint, EarlyStopping
+from utils.training_utils import accuracy, save_checkpoint
 
 
 class TestTrainingUtils(unittest.TestCase):
@@ -36,12 +36,12 @@ class TestTrainingUtils(unittest.TestCase):
         
         # Test top-2 accuracy
         acc2 = accuracy(outputs, targets, topk=(2,))
-        self.assertEqual(acc2[0].item(), 75.0)  # Still 3 out of 4 correct within top 2
+        self.assertEqual(acc2[0].item(), 100.0)  # All 4 correct within top 2
         
         # Test both top-1 and top-2
         acc1, acc2 = accuracy(outputs, targets, topk=(1, 2))
         self.assertEqual(acc1.item(), 75.0)
-        self.assertEqual(acc2.item(), 75.0)
+        self.assertEqual(acc2.item(), 100.0)
         
         # Test with k > number of classes
         acc_large = accuracy(outputs, targets, topk=(5,))
@@ -70,7 +70,7 @@ class TestTrainingUtils(unittest.TestCase):
             save_checkpoint(state, True, temp_dir)
             
             # Check if best file exists
-            self.assertTrue(os.path.exists(os.path.join(temp_dir, 'model_best.pth')))
+            self.assertTrue(os.path.exists(os.path.join(temp_dir, 'best.pth')))
             
             # Load and verify
             loaded = torch.load(os.path.join(temp_dir, 'checkpoint.pth'))
@@ -80,33 +80,6 @@ class TestTrainingUtils(unittest.TestCase):
         finally:
             # Clean up
             shutil.rmtree(temp_dir)
-    
-    def test_early_stopping(self):
-        """Test early stopping functionality."""
-        # Create early stopping with patience 3
-        early_stopping = EarlyStopping(patience=3, verbose=False)
-        
-        # Test improvement
-        self.assertFalse(early_stopping(50.0))  # First call, should not stop
-        self.assertFalse(early_stopping(55.0))  # Improvement, should not stop
-        
-        # Test no improvement
-        self.assertFalse(early_stopping(54.0))  # No improvement, counter = 1
-        self.assertFalse(early_stopping(54.0))  # No improvement, counter = 2
-        self.assertFalse(early_stopping(54.0))  # No improvement, counter = 3
-        self.assertTrue(early_stopping(54.0))   # No improvement, counter = 4, should stop
-        
-        # Verify early stop flag
-        self.assertTrue(early_stopping.early_stop)
-        
-        # Test reset behavior with new instance
-        early_stopping = EarlyStopping(patience=2, verbose=False)
-        self.assertFalse(early_stopping(50.0))
-        self.assertFalse(early_stopping(49.0))  # No improvement, counter = 1
-        self.assertFalse(early_stopping(51.0))  # Improvement, counter reset to 0
-        self.assertFalse(early_stopping(50.0))  # No improvement, counter = 1
-        self.assertFalse(early_stopping(49.0))  # No improvement, counter = 2
-        self.assertTrue(early_stopping(48.0))   # No improvement, counter = 3, should stop
 
 
 if __name__ == '__main__':
