@@ -4,6 +4,48 @@
 
 This research project focuses on enhancing the MobileNetV2 architecture for leaf disease classification tasks. The improvements are implemented in three progressive stages, each building upon the previous one, with the goal of improving classification accuracy while maintaining computational efficiency.
 
+## Workspace Structure Analysis
+
+### Directory Organization
+The project is organized into several key directories:
+- **Main Implementation Stages**:
+  - `base_mobilenetv2/`: Baseline MobileNetV2 implementation
+  - `stage1_mish/`: MobileNetV2 with Mish activation
+  - `stage2_triplet/`: MobileNetV2 with Mish and Triplet Attention
+  - `stage3_cnsn/`: MobileNetV2 with Mish, Triplet Attention, and CNSN
+- **Support Directories**:
+  - `datasets/`: Contains leaf disease datasets including "rice leaf diseases dataset"
+  - `utils/`: Shared utility functions
+  - `tests/`: Test cases for model implementations
+  - `experiments/`: Results and logs from model training
+  - `docs/`: Documentation including model comparison details
+
+### Virtual Environments
+The project uses two separate virtual environments:
+1. **Main PyTorch Environment** (`venv/`):
+   - Primary environment for PyTorch-based model implementations
+   - Contains dependencies: torch, torchvision, numpy, matplotlib, scikit-learn, tqdm, pillow, seaborn
+   - Used for all main model implementations and evaluations
+
+2. **TensorFlow Comparison Environment** (`tf_comparison/tf_venv/`):
+   - Dedicated environment for TensorFlow implementation comparison
+   - Contains TensorFlow 2.19.0 for framework comparison purposes
+   - Used exclusively for the comparison study in the `tf_comparison/` directory
+
+### Framework Comparison Study
+The project includes a dedicated comparison between PyTorch and TensorFlow implementations:
+- Located in the `tf_comparison/` directory
+- Compares parameter counts, model sizes, layer distributions, and inference performance
+- Key findings show PyTorch implementation is ~20% faster for inference
+- Parameter difference is minimal (0.96%) between frameworks
+
+### Optimization Opportunities
+1. **Environment Consolidation**: Consider merging the environments if framework comparison is complete
+2. **Shared Code Refactoring**: Extract common code patterns across implementation stages
+3. **Standardized Evaluation Pipeline**: Create unified evaluation scripts across all stages
+4. **Automated Testing**: Expand test coverage for model implementations
+5. **Documentation Integration**: Better integrate framework comparison findings with main documentation
+
 ## Core Components
 
 ### Base Model: MobileNetV2
