@@ -11,9 +11,12 @@ mobilenetv2_improvements/
 ├── stage2_triplet/       # MobileNetV2 with Mish and Triplet Attention
 ├── stage3_cnsn/          # MobileNetV2 with Mish, Triplet Attention, and CNSN
 ├── datasets/             # Dataset storage (not tracked by git)
+├── docs/                 # Documentation
+│   └── model_comparison/ # Framework comparison documentation
+├── experiments/          # Experiment results and logs
+│   └── model_comparison/ # Framework comparison scripts
 ├── utils/                # Utility functions
-├── tests/                # Test cases
-└── experiments/          # Experiment results and logs
+└── tests/                # Test cases
 ```
 
 ## Model Improvements
