@@ -4,7 +4,7 @@ Tests for Mish activation function.
 import torch
 import pytest
 import numpy as np
-from mobilenetv2_improvements.stage1_mish.models.mish import Mish
+from stage1_mish.models.mish import Mish, replace_relu_with_mish
 
 
 def test_mish_forward():
@@ -65,3 +65,46 @@ def test_mish_gradient():
     # Gradient should exist and not be zero
     assert x.grad is not None
     assert x.grad.item() != 0
+
+
+class SimpleModel(torch.nn.Module):
+    """Simple model for testing replace_relu_with_mish function."""
+    def __init__(self):
+        super(SimpleModel, self).__init__()
+        self.relu1 = torch.nn.ReLU()
+        self.relu2 = torch.nn.ReLU6()
+        self.conv = torch.nn.Conv2d(3, 3, 3)
+        self.bn = torch.nn.BatchNorm2d(3)
+        self.seq = torch.nn.Sequential(
+            torch.nn.Conv2d(3, 3, 3),
+            torch.nn.ReLU6(),
+            torch.nn.BatchNorm2d(3)
+        )
+    
+    def forward(self, x):
+        x = self.relu1(self.conv(x))
+        x = self.relu2(self.bn(x))
+        x = self.seq(x)
+        return x
+
+
+def test_replace_relu_with_mish():
+    """Test replace_relu_with_mish function."""
+    model = SimpleModel()
+    
+    # Count ReLU and ReLU6 modules before replacement
+    relu_count_before = sum(1 for m in model.modules() if isinstance(m, (torch.nn.ReLU, torch.nn.ReLU6)))
+    
+    # Replace ReLU with Mish
+    model = replace_relu_with_mish(model)
+    
+    # Count Mish modules after replacement
+    mish_count_after = sum(1 for m in model.modules() if isinstance(m, Mish))
+    
+    # Count ReLU and ReLU6 modules after replacement
+    relu_count_after = sum(1 for m in model.modules() if isinstance(m, (torch.nn.ReLU, torch.nn.ReLU6)))
+    
+    # Check that all ReLU modules were replaced
+    assert relu_count_before > 0
+    assert relu_count_after == 0
+    assert mish_count_after == relu_count_before

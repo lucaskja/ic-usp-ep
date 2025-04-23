@@ -5,12 +5,12 @@ import torch
 import torch.nn as nn
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
 
-from mobilenetv2_improvements.stage1_mish.models.mish import replace_relu_with_mish
+from stage1_mish.models.mish import replace_relu_with_mish
 
 
 def create_mobilenetv2_mish(num_classes, pretrained=True):
     """
-    Create a MobileNetV2 model with Mish activation function.
+    Create a MobileNetV2 model with Mish activation.
     
     Args:
         num_classes (int): Number of output classes

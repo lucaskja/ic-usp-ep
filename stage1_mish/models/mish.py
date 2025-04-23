@@ -1,5 +1,8 @@
 """
 Implementation of Mish activation function.
+
+Paper: Mish: A Self Regularized Non-Monotonic Neural Activation Function
+https://arxiv.org/abs/1908.08681
 """
 import torch
 import torch.nn as nn
@@ -10,12 +13,10 @@ class Mish(nn.Module):
     """
     Mish activation function.
     
-    Mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + exp(x)))
-    
-    Paper: https://arxiv.org/abs/1908.08681
+    Formula: mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + exp(x)))
     """
     def __init__(self):
-        super().__init__()
+        super(Mish, self).__init__()
     
     def forward(self, x):
         """
@@ -32,7 +33,7 @@ class Mish(nn.Module):
 
 def replace_relu_with_mish(model):
     """
-    Replace all ReLU and ReLU6 activations with Mish in a model.
+    Replace all ReLU and ReLU6 activations in a model with Mish.
     
     Args:
         model (nn.Module): PyTorch model
