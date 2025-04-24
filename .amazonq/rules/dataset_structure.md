@@ -107,6 +107,6 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_worker
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4)
 ```
 
-## K-Fold Cross-Validation
+## Holdout Method
 
-For model development and hyperparameter tuning, we use K-Fold cross-validation as described in the `data_validation.md` file. This ensures robust evaluation of our models before final testing.
+For model development and hyperparameter tuning, we use the Holdout method as described in the `data_validation.md` file. This ensures robust evaluation of our models before final testing.

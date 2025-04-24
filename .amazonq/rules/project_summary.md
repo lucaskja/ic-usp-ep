@@ -97,20 +97,18 @@ The project includes a dedicated comparison between PyTorch and TensorFlow imple
 
 ## Evaluation Methodology
 
-### K-Fold Cross-Validation
-- **Implementation**: 5-fold cross-validation (k=5)
+### Holdout Method
+- **Implementation**: 80/20 train-validation split
 - **Process**:
-  1. Dataset divided into 5 equal parts (folds)
-  2. For each fold:
-     - Current fold used as validation set
-     - Remaining 4 folds used as training set
-     - Model trained and evaluated
-  3. Process repeated 5 times
-  4. Final metrics averaged across all 5 runs
+  1. Dataset divided into two parts:
+     - 80% used as training set
+     - 20% used as validation set
+  2. Model trained on training set and evaluated on validation set
+  3. Simple, one-time split provides clear separation between training and validation data
 - **Benefits**:
-  - Robust evaluation
-  - Reduced variance
-  - Efficient data usage
+  - Simplicity and ease of implementation
+  - Computational efficiency
+  - Clear separation between training and validation data
   - Fair comparison between models
 
 ### Dataset Structure
