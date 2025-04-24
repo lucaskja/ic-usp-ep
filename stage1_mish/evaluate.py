@@ -34,6 +34,8 @@ def parse_args():
                         help='Batch size (default: from config)')
     parser.add_argument('--no_cuda', action='store_true',
                         help='Disable CUDA')
+    parser.add_argument('--device', type=str, default=None,
+                        help='Device to use (e.g., "cuda", "cpu")')
     parser.add_argument('--debug', action='store_true',
                         help='Run in debug mode with smaller dataset')
     
@@ -48,8 +50,11 @@ def main():
     setup_logging('stage1_mish_eval', 'logs')
     
     # Set device
-    use_cuda = not args.no_cuda and torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
+    if args.device:
+        device = torch.device(args.device)
+    else:
+        use_cuda = not args.no_cuda and torch.cuda.is_available()
+        device = torch.device("cuda" if use_cuda else "cpu")
     print(f"Using device: {device}")
     
     # Create output directory
