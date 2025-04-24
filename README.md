@@ -14,10 +14,42 @@ mobilenetv2_improvements/
 ├── docs/                 # Documentation
 │   └── model_comparison/ # Framework comparison documentation
 ├── experiments/          # Experiment results and logs
-│   └── model_comparison/ # Framework comparison scripts
+│   ├── model_comparison/ # Framework comparison scripts
+│   ├── enhanced/         # Results with enhanced augmentation
+│   └── visualizations/   # Data augmentation visualizations
 ├── utils/                # Utility functions
+│   ├── data_utils.py     # Standard data loading utilities
+│   ├── enhanced_data_utils.py # Enhanced data augmentation
+│   └── visualize_transforms.py # Visualization tools for data transforms
+├── train_enhanced.py     # Unified training script with enhanced augmentation
 └── tests/                # Test cases
 ```
+
+## Recent Updates
+
+### Enhanced Data Augmentation
+
+We've added enhanced data augmentation techniques to improve model generalization and prevent overfitting:
+
+- **Stronger Augmentations**: More aggressive transformations including perspective changes, affine transformations, random erasing, and stronger color jittering
+- **Visualization Tools**: New utilities to visualize how data augmentation affects training images
+- **Unified Training Script**: A single script to train any model variant with enhanced augmentation
+
+#### Enhanced Augmentation Techniques
+
+The enhanced data augmentation pipeline includes:
+
+- RandomResizedCrop with scale variation (70-100%)
+- RandomHorizontalFlip (50% probability)
+- RandomVerticalFlip (30% probability)
+- RandomRotation (up to 20 degrees)
+- ColorJitter (brightness, contrast, saturation, hue)
+- RandomAffine (translation and scaling)
+- RandomPerspective (perspective transformations)
+- RandomGrayscale (10% probability)
+- RandomErasing (simulates occlusion)
+
+These techniques significantly increase the effective size of the training dataset by creating diverse variations of each image, helping the model learn more robust features.
 
 ## Model Improvements
 
@@ -292,6 +324,52 @@ To generate visualizations and performance comparisons:
 
 ```bash
 python analyze.py --results_dir experiments/results --output_dir experiments/visualizations
+```
+
+### Data Augmentation Visualization
+
+To visualize how data augmentation affects your training images:
+
+```bash
+# Visualize standard augmentations
+python utils/visualize_transforms.py --image_path datasets/leaf_disease/train/Bacterialblight/BACTERAILBLIGHT3_001.jpg --output_dir experiments/visualizations
+
+# Visualize enhanced augmentations
+python utils/visualize_transforms.py --image_path datasets/leaf_disease/train/Bacterialblight/BACTERAILBLIGHT3_001.jpg --output_dir experiments/visualizations --enhanced
+```
+
+This will generate visualizations showing the original image alongside multiple augmented versions, helping you understand how your data is being transformed during training.
+
+### Training with Enhanced Augmentation
+
+To train models with the enhanced data augmentation pipeline:
+
+```bash
+# Train base MobileNetV2 with enhanced augmentation
+python train_enhanced.py --data_dir datasets/leaf_disease --model_type base --epochs 50 --batch_size 32
+
+# Train MobileNetV2 with Mish and enhanced augmentation
+python train_enhanced.py --data_dir datasets/leaf_disease --model_type mish --epochs 50 --batch_size 32
+
+# Train MobileNetV2 with Triplet Attention and enhanced augmentation
+python train_enhanced.py --data_dir datasets/leaf_disease --model_type triplet --epochs 50 --batch_size 32
+
+# Train MobileNetV2 with CNSN and enhanced augmentation
+python train_enhanced.py --data_dir datasets/leaf_disease --model_type cnsn --epochs 50 --batch_size 32
+```
+
+For GPU acceleration:
+
+```bash
+# Train with GPU acceleration
+python train_enhanced.py --data_dir datasets/leaf_disease --model_type base --epochs 50 --batch_size 64 --device cuda
+```
+
+For quick testing:
+
+```bash
+# Run with a small subset of data and just 2 epochs
+python train_enhanced.py --data_dir datasets/leaf_disease --model_type base --epochs 2 --batch_size 16 --debug
 ```
 
 ## Validation Strategy
