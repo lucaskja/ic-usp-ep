@@ -120,7 +120,7 @@ python test_gpu.py
 
 ### Training
 
-To train the models with K-Fold cross-validation:
+To train the models with Holdout validation (80% training, 20% validation):
 
 #### Basic Training Commands
 
@@ -294,9 +294,9 @@ To generate visualizations and performance comparisons:
 python analyze.py --results_dir experiments/results --output_dir experiments/visualizations
 ```
 
-## Cross-Validation
+## Validation Strategy
 
-This project uses K-Fold cross-validation for robust model evaluation. For details on the implementation, see [data_validation.md](data_validation.md).
+This project uses the Holdout method for model validation, with 80% of the data used for training and 20% for validation. This provides a simple and effective way to evaluate model performance while maintaining computational efficiency.
 
 ## Testing
 
