@@ -7,8 +7,11 @@ from torch.utils.data import DataLoader, random_split, Subset
 from torchvision.datasets import ImageFolder
 import torchvision.transforms as transforms
 import logging
+from utils.deprecated import deprecated
 
 
+@deprecated(reason="Use load_dataset from the unified training script instead", 
+          alternative="utils.enhanced_data_utils.load_enhanced_dataset")
 def get_transforms(img_size=224):
     """
     Get data transforms for training and validation.
@@ -44,6 +47,8 @@ def get_transforms(img_size=224):
     return train_transforms, val_transforms
 
 
+@deprecated(reason="Use load_dataset from the unified training script instead", 
+          alternative="utils.enhanced_data_utils.load_enhanced_dataset")
 def load_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, num_workers=4, debug=False):
     """
     Load dataset from directory.

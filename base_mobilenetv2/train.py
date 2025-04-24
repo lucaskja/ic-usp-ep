@@ -1,5 +1,7 @@
 """
 Training script for base MobileNetV2 model.
+
+This script is deprecated. Please use the unified training script (train.py) instead.
 """
 import os
 import argparse
@@ -8,6 +10,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+import warnings
 
 from models.mobilenetv2 import MobileNetV2Model
 import sys
@@ -51,6 +54,12 @@ def parse_args():
 
 def main():
     """Main training function."""
+    warnings.warn(
+        "This training script is deprecated. Please use the unified training script (train.py) instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    
     args = parse_args()
     
     # Set up logging

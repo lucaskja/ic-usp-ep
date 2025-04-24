@@ -1,5 +1,7 @@
 """
 Evaluation script for base MobileNetV2 model.
+
+This script is deprecated. Please use the unified evaluation script (evaluate.py) instead.
 """
 import os
 import argparse
@@ -10,6 +12,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
+import warnings
 
 from models.mobilenetv2 import MobileNetV2Model
 import sys
@@ -44,6 +47,12 @@ def parse_args():
 
 def main():
     """Main evaluation function."""
+    warnings.warn(
+        "This evaluation script is deprecated. Please use the unified evaluation script (evaluate.py) instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    
     args = parse_args()
     
     # Set up logging
