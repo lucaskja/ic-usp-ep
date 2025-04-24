@@ -1,6 +1,7 @@
 """
 MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
 """
+import os
 import torch
 import torch.nn as nn
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
@@ -14,18 +15,19 @@ class InvertedResidualWithTripletAttentionAndCNSN(nn.Module):
     """
     Inverted Residual block with Triplet Attention and CNSN.
     """
-    def __init__(self, inverted_residual_block, num_channels):
+    def __init__(self, inverted_residual_block, num_channels, crossnorm_mode='2-instance'):
         """
         Initialize wrapper for inverted residual block.
         
         Args:
             inverted_residual_block: Original inverted residual block
             num_channels (int): Number of output channels
+            crossnorm_mode (str): CrossNorm mode ('1-instance', '2-instance', or 'crop')
         """
         super(InvertedResidualWithTripletAttentionAndCNSN, self).__init__()
         self.block = inverted_residual_block
         self.attention = TripletAttention(kernel_size=7)
-        self.cnsn = CNSN(num_channels, crossnorm_mode='2-instance', p=0.5)
+        self.cnsn = CNSN(num_channels, crossnorm_mode=crossnorm_mode, p=0.5)
         self.use_res_connect = self.block.use_res_connect
     
     def forward(self, x):
@@ -83,12 +85,13 @@ def get_output_channels(layer):
             return 32
 
 
-def add_triplet_attention_and_cnsn_to_mobilenetv2(model):
+def add_triplet_attention_and_cnsn_to_mobilenetv2(model, crossnorm_mode='2-instance'):
     """
     Add Triplet Attention and CNSN to MobileNetV2 model.
     
     Args:
         model (nn.Module): MobileNetV2 model
+        crossnorm_mode (str): CrossNorm mode ('1-instance', '2-instance', or 'crop')
         
     Returns:
         nn.Module: MobileNetV2 model with Triplet Attention and CNSN
@@ -98,22 +101,28 @@ def add_triplet_attention_and_cnsn_to_mobilenetv2(model):
         if hasattr(layer, 'conv'):  # Check if it's an inverted residual block
             # Get number of output channels
             num_channels = get_output_channels(layer)
-            model.features[i] = InvertedResidualWithTripletAttentionAndCNSN(layer, num_channels)
+            model.features[i] = InvertedResidualWithTripletAttentionAndCNSN(layer, num_channels, crossnorm_mode)
     
     return model
 
 
-def create_mobilenetv2_cnsn(num_classes, pretrained=True):
+def create_mobilenetv2_cnsn(num_classes, pretrained=True, crossnorm_mode='2-instance'):
     """
     Create a MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
     
     Args:
         num_classes (int): Number of output classes
         pretrained (bool): Whether to use pretrained weights
+        crossnorm_mode (str): CrossNorm mode ('1-instance', '2-instance', or 'crop')
         
     Returns:
         nn.Module: MobileNetV2 model with Mish, Triplet Attention, and CNSN
     """
+    # Ensure num_classes is correct for leaf disease dataset (3 classes)
+    if num_classes != 3 and 'leaf_disease' in os.getcwd():
+        print(f"Warning: Expected 3 classes for leaf disease dataset, but got {num_classes}. Using 3 classes.")
+        num_classes = 3
+        
     if pretrained:
         model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
     else:
@@ -123,7 +132,7 @@ def create_mobilenetv2_cnsn(num_classes, pretrained=True):
     model = replace_relu_with_mish(model)
     
     # Add Triplet Attention and CNSN
-    model = add_triplet_attention_and_cnsn_to_mobilenetv2(model)
+    model = add_triplet_attention_and_cnsn_to_mobilenetv2(model, crossnorm_mode)
     
     # Modify the classifier for our number of classes
     in_features = model.classifier[1].in_features
@@ -139,16 +148,17 @@ class MobileNetV2CNSNModel(nn.Module):
     """
     Wrapper class for MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
     """
-    def __init__(self, num_classes, pretrained=True):
+    def __init__(self, num_classes, pretrained=True, cn_mode='2-instance'):
         """
         Initialize MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
         
         Args:
             num_classes (int): Number of output classes
             pretrained (bool): Whether to use pretrained weights
+            cn_mode (str): CrossNorm mode ('1-instance', '2-instance', or 'crop')
         """
         super(MobileNetV2CNSNModel, self).__init__()
-        self.model = create_mobilenetv2_cnsn(num_classes, pretrained)
+        self.model = create_mobilenetv2_cnsn(num_classes, pretrained, cn_mode)
         
     def forward(self, x):
         """

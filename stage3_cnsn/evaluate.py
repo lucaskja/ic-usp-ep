@@ -11,7 +11,7 @@ import seaborn as sns
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 
-from models.mobilenetv2_mish_triplet_cnsn import MobileNetV2MishTripletCNSNModel
+from models.mobilenetv2_cnsn import MobileNetV2CNSNModel
 import sys
 sys.path.append('..')  # Add parent directory to path
 from utils.data_utils import load_dataset
@@ -72,7 +72,7 @@ def main():
     print(f"Dataset loaded with {num_classes} classes")
     
     # Create model
-    model = MobileNetV2MishTripletCNSNModel(num_classes)
+    model = MobileNetV2CNSNModel(num_classes)
     
     # Load checkpoint
     checkpoint = torch.load(args.checkpoint, map_location=device)

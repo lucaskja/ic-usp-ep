@@ -9,7 +9,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
-from models.mobilenetv2_mish_triplet_cnsn import MobileNetV2MishTripletCNSNModel
+from models.mobilenetv2_cnsn import MobileNetV2CNSNModel
 import sys
 sys.path.append('..')  # Add parent directory to path
 from utils.data_utils import load_dataset
@@ -88,7 +88,7 @@ def main():
     print(f"Dataset loaded with {num_classes} classes")
     
     # Create model
-    model = MobileNetV2MishTripletCNSNModel(num_classes, pretrained=args.pretrained, cn_mode=args.cn_mode)
+    model = MobileNetV2CNSNModel(num_classes, pretrained=args.pretrained)
     model = model.to(device)
     print(f"MobileNetV2 with Mish, Triplet Attention, and CNSN (mode: {args.cn_mode}) model created")
     
