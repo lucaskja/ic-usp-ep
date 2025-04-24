@@ -272,64 +272,64 @@ venv\Scripts\activate && python train_enhanced.py --data_dir datasets\leaf_disea
 
 ### Evaluation
 
-To evaluate the models on the test set:
+To evaluate the models on the test set using the unified evaluation script:
 
 ```bash
 # Base MobileNetV2
-cd base_mobilenetv2
-source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth
+source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type base --checkpoint checkpoints/base/best.pth
 
 # MobileNetV2 with Mish
-cd stage1_mish
-source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth
+source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type mish --checkpoint checkpoints/mish/best.pth
 
 # MobileNetV2 with Mish and Triplet Attention
-cd stage2_triplet
-source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth
+source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type triplet --checkpoint checkpoints/triplet/best.pth
 
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
-cd stage3_cnsn
-source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth
+source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type cnsn --checkpoint checkpoints/cnsn/best.pth
+```
+
+#### Enhanced Preprocessing Evaluation
+
+To evaluate models with enhanced preprocessing:
+
+```bash
+# Base MobileNetV2 with enhanced preprocessing
+source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type base --checkpoint checkpoints/base/best.pth --enhanced_preprocessing
+
+# MobileNetV2 with Mish and enhanced preprocessing
+source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type mish --checkpoint checkpoints/mish/best.pth --enhanced_preprocessing
 ```
 
 #### GPU Evaluation Commands (Linux/macOS)
 
 ```bash
 # Base MobileNetV2 with GPU
-cd base_mobilenetv2
-source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth --device cuda
+source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type base --checkpoint checkpoints/base/best.pth --device cuda
 
-# MobileNetV2 with Mish
-cd stage1_mish
-source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth --device cuda
+# MobileNetV2 with Mish with GPU
+source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type mish --checkpoint checkpoints/mish/best.pth --device cuda
 
-# MobileNetV2 with Mish and Triplet Attention
-cd stage2_triplet
-source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth --device cuda
+# MobileNetV2 with Mish and Triplet Attention with GPU
+source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type triplet --checkpoint checkpoints/triplet/best.pth --device cuda
 
-# MobileNetV2 with Mish, Triplet Attention, and CNSN
-cd stage3_cnsn
-source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth --device cuda
+# MobileNetV2 with Mish, Triplet Attention, and CNSN with GPU
+source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type cnsn --checkpoint checkpoints/cnsn/best.pth --device cuda
 ```
 
 #### Windows GPU Evaluation Commands
 
 ```bash
 # Base MobileNetV2 with GPU
-cd base_mobilenetv2
-venv\Scripts\activate && python evaluate.py --data_dir ..\datasets\leaf_disease\test --checkpoint checkpoints\best.pth --device cuda
+venv\Scripts\activate && python evaluate.py --data_dir datasets\leaf_disease\test --model_type base --checkpoint checkpoints\base\best.pth --device cuda
 
-# MobileNetV2 with Mish
-cd stage1_mish
-venv\Scripts\activate && python evaluate.py --data_dir ..\datasets\leaf_disease\test --checkpoint checkpoints\best.pth --device cuda
+# MobileNetV2 with Mish with GPU
+venv\Scripts\activate && python evaluate.py --data_dir datasets\leaf_disease\test --model_type mish --checkpoint checkpoints\mish\best.pth --device cuda
 
-# MobileNetV2 with Mish and Triplet Attention
-cd stage2_triplet
-venv\Scripts\activate && python evaluate.py --data_dir ..\datasets\leaf_disease\test --checkpoint checkpoints\best.pth --device cuda
+# MobileNetV2 with Mish and Triplet Attention with GPU
+venv\Scripts\activate && python evaluate.py --data_dir datasets\leaf_disease\test --model_type triplet --checkpoint checkpoints\triplet\best.pth --device cuda
 
-# MobileNetV2 with Mish, Triplet Attention, and CNSN
-cd stage3_cnsn
-venv\Scripts\activate && python evaluate.py --data_dir ..\datasets\leaf_disease\test --checkpoint checkpoints\best.pth --device cuda
+# MobileNetV2 with Mish, Triplet Attention, and CNSN with GPU
+venv\Scripts\activate && python evaluate.py --data_dir datasets\leaf_disease\test --model_type cnsn --checkpoint checkpoints\cnsn\best.pth --device cuda
 ```
 
 ### Visualization and Analysis
