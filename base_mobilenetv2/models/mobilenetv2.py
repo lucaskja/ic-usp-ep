@@ -1,6 +1,7 @@
 """
 Base MobileNetV2 model for leaf disease classification.
 """
+import os
 import torch
 import torch.nn as nn
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
@@ -17,6 +18,11 @@ def create_mobilenetv2(num_classes, pretrained=True):
     Returns:
         nn.Module: MobileNetV2 model
     """
+    # Ensure num_classes is correct for leaf disease dataset (3 classes)
+    if num_classes != 3 and 'leaf_disease' in os.getcwd():
+        print(f"Warning: Expected 3 classes for leaf disease dataset, but got {num_classes}. Using 3 classes.")
+        num_classes = 3
+        
     if pretrained:
         model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
     else:

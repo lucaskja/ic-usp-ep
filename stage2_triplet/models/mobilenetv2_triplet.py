@@ -1,6 +1,7 @@
 """
 MobileNetV2 model with Mish activation and Triplet Attention.
 """
+import os
 import torch
 import torch.nn as nn
 from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
@@ -75,6 +76,11 @@ def create_mobilenetv2_triplet(num_classes, pretrained=True):
     Returns:
         nn.Module: MobileNetV2 model with Mish and Triplet Attention
     """
+    # Ensure num_classes is correct for leaf disease dataset (3 classes)
+    if num_classes != 3 and 'leaf_disease' in os.getcwd():
+        print(f"Warning: Expected 3 classes for leaf disease dataset, but got {num_classes}. Using 3 classes.")
+        num_classes = 3
+        
     if pretrained:
         model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
     else:
@@ -109,6 +115,11 @@ class MobileNetV2TripletModel(nn.Module):
             pretrained (bool): Whether to use pretrained weights
         """
         super(MobileNetV2TripletModel, self).__init__()
+        # For leaf disease dataset, ensure we have 3 classes
+        if 'leaf_disease' in os.getcwd() and num_classes != 3:
+            print(f"Warning: Expected 3 classes for leaf disease dataset, but got {num_classes}. Using 3 classes.")
+            num_classes = 3
+            
         self.model = create_mobilenetv2_triplet(num_classes, pretrained)
         
     def forward(self, x):
