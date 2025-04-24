@@ -1,0 +1,9 @@
+# Ignore large experiment files but keep directory structure
+experiments/visualizations/*.jpg
+experiments/visualizations/*.png
+experiments/enhanced/*.png
+experiments/enhanced/*.jpg
+
+# Don't ignore .gitkeep files
+!experiments/visualizations/.gitkeep
+!experiments/enhanced/.gitkeep
