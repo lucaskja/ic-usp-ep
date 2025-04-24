@@ -9,7 +9,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
-from models.mobilenetv2_mish_triplet import MobileNetV2MishTripletModel
+from models.mobilenetv2_triplet import MobileNetV2TripletModel
 import sys
 sys.path.append('..')  # Add parent directory to path
 from utils.data_utils import load_dataset
@@ -85,7 +85,7 @@ def main():
     print(f"Dataset loaded with {num_classes} classes")
     
     # Create model
-    model = MobileNetV2MishTripletModel(num_classes, pretrained=args.pretrained)
+    model = MobileNetV2TripletModel(num_classes, pretrained=args.pretrained)
     model = model.to(device)
     print("MobileNetV2 with Mish and Triplet Attention model created")
     
@@ -163,9 +163,9 @@ def main():
         
         # Store results
         train_losses.append(train_metrics['loss'])
-        train_accs.append(train_metrics['acc1'].item())
+        train_accs.append(train_metrics['acc1'] if isinstance(train_metrics['acc1'], float) else train_metrics['acc1'].item())
         val_losses.append(val_metrics['loss'])
-        val_accs.append(val_metrics['acc1'].item())
+        val_accs.append(val_metrics['acc1'] if isinstance(val_metrics['acc1'], float) else val_metrics['acc1'].item())
         
         # Save checkpoint
         is_best = val_metrics['acc1'] > best_acc
