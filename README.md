@@ -142,6 +142,28 @@ cd stage3_cnsn
 source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001
 ```
 
+#### GPU Training Commands (Linux/macOS)
+
+For systems with GPU acceleration:
+
+```bash
+# Base MobileNetV2 with GPU
+cd base_mobilenetv2
+source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
+
+# MobileNetV2 with Mish
+cd stage1_mish
+source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
+
+# MobileNetV2 with Mish and Triplet Attention
+cd stage2_triplet
+source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
+
+# MobileNetV2 with Mish, Triplet Attention, and CNSN
+cd stage3_cnsn
+source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
+```
+
 #### Windows GPU Training Commands
 
 For Windows with GPU acceleration:
@@ -171,19 +193,19 @@ For training with SGD optimizer and learning rate decay (recommended for optimal
 ```bash
 # Base MobileNetV2 with SGD and LR decay
 cd base_mobilenetv2
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001
+source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001 --device cuda
 
 # MobileNetV2 with Mish
 cd stage1_mish
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001
+source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001 --device cuda
 
 # MobileNetV2 with Mish and Triplet Attention
 cd stage2_triplet
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001
+source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001 --device cuda
 
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
 cd stage3_cnsn
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001
+source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 60 --batch_size 32 --lr 0.001 --device cuda
 ```
 
 #### Quick Testing Mode
@@ -193,7 +215,7 @@ For quick testing to ensure everything is working correctly:
 ```bash
 # Run with a small subset of data and just 1 epoch
 cd base_mobilenetv2
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 1 --batch_size 8 --debug
+source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 1 --batch_size 8 --debug --device cuda
 ```
 
 Note: The learning rate scheduler is already configured in the default configuration files with:
@@ -222,6 +244,26 @@ source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_di
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
 cd stage3_cnsn
 source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth
+```
+
+#### GPU Evaluation Commands (Linux/macOS)
+
+```bash
+# Base MobileNetV2 with GPU
+cd base_mobilenetv2
+source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth --device cuda
+
+# MobileNetV2 with Mish
+cd stage1_mish
+source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth --device cuda
+
+# MobileNetV2 with Mish and Triplet Attention
+cd stage2_triplet
+source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth --device cuda
+
+# MobileNetV2 with Mish, Triplet Attention, and CNSN
+cd stage3_cnsn
+source ../venv/bin/activate && python evaluate.py --data_dir ../datasets/leaf_disease/test --checkpoint checkpoints/best.pth --device cuda
 ```
 
 #### Windows GPU Evaluation Commands
