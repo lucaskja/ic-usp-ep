@@ -122,10 +122,14 @@ def load_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, num_worke
     )
     
     # Get number of classes
-    # For leaf disease dataset, we know there are 3 classes: Bacterial Blight, Brown Spot, and Leaf Smut
-    if 'leaf_disease' in data_dir:
-        num_classes = 3
-        logging.info("Leaf disease dataset detected, using 3 classes")
+     # For leaf disease dataset, we know there are 4 classes: Bacterial Blight, Brown Spot, and Leaf Smut, Tungro
+    if 'rld' in data_dir:
+        num_classes = 4
+        logging.info("Leaf disease dataset detected, using 4 classes")
+    # For plant_village dataset, we know there are 39 classes
+    elif 'pv' in data_dir:
+        num_classes = 39
+        logging.info("Plant Village dataset detected, using 39 classes")
     elif hasattr(train_dataset, 'classes'):
         num_classes = len(train_dataset.classes)
     elif hasattr(train_dataset, 'dataset') and hasattr(train_dataset.dataset, 'classes'):

@@ -128,10 +128,14 @@ def load_enhanced_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, 
     )
     
     # Get number of classes
-    # For leaf disease dataset, we know there are 3 classes: Bacterial Blight, Brown Spot, and Leaf Smut
-    if 'leaf_disease' in data_dir:
-        num_classes = 3
-        logging.info("Leaf disease dataset detected, using 3 classes")
+    # For leaf disease dataset, we know there are 4 classes: Bacterial Blight, Brown Spot, and Leaf Smut, Tungro
+    if 'rld' in data_dir:
+        num_classes = 4
+        logging.info("Leaf disease dataset detected, using 4 classes")
+    # For plant_village dataset, we know there are 39 classes
+    elif 'pv' in data_dir:
+        num_classes = 39
+        logging.info("Plant Village dataset detected, using 39 classes")
     elif hasattr(train_dataset, 'classes'):
         num_classes = len(train_dataset.classes)
     elif hasattr(train_dataset, 'dataset') and hasattr(train_dataset.dataset, 'classes'):
@@ -151,10 +155,10 @@ def load_enhanced_dataset(data_dir, img_size=224, batch_size=32, val_split=0.2, 
             num_classes = 1000
             logging.warning("Could not determine number of classes, defaulting to 1000")
     
-    # Verify that we have the correct number of classes for leaf disease dataset
-    if 'leaf_disease' in data_dir and num_classes != 3:
-        logging.warning(f"Expected 3 classes for leaf disease dataset, but found {num_classes}. Overriding to 3 classes.")
-        num_classes = 3
+    # # Verify that we have the correct number of classes for leaf disease dataset
+    # if 'leaf_disease' in data_dir and num_classes != 3:
+    #     logging.warning(f"Expected 3 classes for leaf disease dataset, but found {num_classes}. Overriding to 3 classes.")
+    #     num_classes = 3
     
     logging.info(f"Dataset loaded: {len(train_dataset)} training samples, {len(val_dataset)} validation samples")
     logging.info(f"Number of classes: {num_classes}")
