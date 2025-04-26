@@ -34,6 +34,7 @@ from utils.enhanced_data_utils import load_enhanced_dataset
 from utils.training_utils import train_one_epoch, validate, save_checkpoint, setup_logging, EarlyStopping
 from utils.model_utils import get_model_size, print_model_summary
 from base_mobilenetv2.configs.default_config import TRAIN_CONFIG, DATA_CONFIG
+from base_mobilenetv2.evaluation.evaluator import MobileNetV2Evaluator
 
 def parse_args():
     """Parse command line arguments."""
@@ -47,6 +48,8 @@ def parse_args():
     parser.add_argument('--model_type', type=str, default='base',
                         choices=['base', 'mish', 'triplet', 'cnsn'],
                         help='Model type to train')
+    parser.add_argument('--train_all', action='store_true',
+                        help='Train all models sequentially (base -> mish -> triplet -> cnsn) and evaluate after training')
     
     # Training parameters
     parser.add_argument('--epochs', type=int, default=None,
@@ -77,7 +80,7 @@ def parse_args():
     parser.add_argument('--img_size', type=int, default=None,
                         help='Input image size (default: from config)')
     parser.add_argument('--num_workers', type=int, default=None,
-                        help='Number of data loading workers (default: from config)')
+                        help='Number of workers for data loading (default: from config)')
     
     # Model parameters
     parser.add_argument('--pretrained', action='store_true',
@@ -193,25 +196,35 @@ def get_train_config(args):
         
     return train_config
 
-def get_output_dirs(args):
+def get_output_dirs(args, model_type=None):
     """
     Get output directories with defaults based on model type.
     
     Args:
         args (Namespace): Command line arguments
+        model_type (str, optional): Override model type from args
         
     Returns:
         tuple: (output_dir, checkpoint_dir)
     """
+    # Use provided model_type if given, otherwise use from args
+    model_type = model_type or args.model_type
+    
     # Set default output directory if not provided
     output_dir = args.output_dir
     if output_dir is None:
-        output_dir = os.path.join('experiments', args.model_type)
+        output_dir = os.path.join('experiments', model_type)
+    elif args.train_all:
+        # If training all models, create model-specific subdirectories
+        output_dir = os.path.join(output_dir, model_type)
     
     # Set default checkpoint directory if not provided
     checkpoint_dir = args.checkpoint_dir
     if checkpoint_dir is None:
-        checkpoint_dir = os.path.join('checkpoints', args.model_type)
+        checkpoint_dir = os.path.join('checkpoints', model_type)
+    elif args.train_all:
+        # If training all models, create model-specific subdirectories
+        checkpoint_dir = os.path.join(checkpoint_dir, model_type)
     
     # Create directories if they don't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -257,60 +270,30 @@ def plot_training_curves(train_losses, train_accs, val_losses, val_accs, output_
     plt.savefig(output_path)
     logging.info(f"Training curves saved to {output_path}")
 
-def main():
-    """Main training function."""
-    args = parse_args()
+def train_model(args, model_type, train_loader, val_loader, test_loader, num_classes, device):
+    """
+    Train a single model.
     
-    # Set random seed for reproducibility
-    torch.manual_seed(args.seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(args.seed)
-    
-    # Set up logging
-    log_name = f"{args.model_type}_{'enhanced' if args.enhanced_augmentation else 'standard'}"
-    setup_logging(log_name, args.log_dir)
-    
-    # Set device
-    if args.device:
-        device = torch.device(args.device)
-    else:
-        use_cuda = not args.no_cuda and torch.cuda.is_available()
-        device = torch.device("cuda" if use_cuda else "cpu")
-    logging.info(f"Using device: {device}")
-    
+    Args:
+        args (Namespace): Command line arguments
+        model_type (str): Type of model to train
+        train_loader (DataLoader): Training data loader
+        val_loader (DataLoader): Validation data loader
+        test_loader (DataLoader): Test data loader
+        num_classes (int): Number of classes
+        device (torch.device): Device to use
+        
+    Returns:
+        tuple: (best_model_path, best_val_acc, test_results)
+    """
     # Get output directories
-    output_dir, checkpoint_dir = get_output_dirs(args)
+    output_dir, checkpoint_dir = get_output_dirs(args, model_type)
     
-    # Get configurations
-    data_config = get_data_config(args)
+    # Get training configuration
     train_config = get_train_config(args)
     
-    # Load dataset
-    if args.enhanced_augmentation:
-        logging.info("Using enhanced data augmentation")
-        train_loader, val_loader, num_classes = load_enhanced_dataset(
-            args.data_dir,
-            img_size=data_config['img_size'],
-            batch_size=data_config['batch_size'],
-            val_split=data_config['val_split'],
-            num_workers=data_config['num_workers'],
-            debug=args.debug
-        )
-    else:
-        logging.info("Using standard data augmentation")
-        train_loader, val_loader, num_classes = load_dataset(
-            args.data_dir,
-            img_size=data_config['img_size'],
-            batch_size=data_config['batch_size'],
-            val_split=data_config['val_split'],
-            num_workers=data_config['num_workers'],
-            debug=args.debug
-        )
-    
-    logging.info(f"Dataset loaded with {num_classes} classes")
-    
     # Create model
-    model = create_model(args.model_type, num_classes, pretrained=args.pretrained)
+    model = create_model(model_type, num_classes, pretrained=args.pretrained)
     model = model.to(device)
     
     # Print model summary
@@ -360,7 +343,13 @@ def main():
             logging.error(f"No checkpoint found at '{args.resume}'")
     
     # Create early stopping object
-    early_stopping = EarlyStopping(patience=train_config['early_stopping_patience']) if train_config['early_stopping_patience'] > 0 else None
+    early_stopping = None
+    if args.train_all:
+        # Disable early stopping when training all models
+        logging.info("Early stopping disabled for sequential training mode")
+    elif train_config['early_stopping_patience'] > 0:
+        early_stopping = EarlyStopping(patience=train_config['early_stopping_patience'])
+        logging.info(f"Early stopping enabled with patience {train_config['early_stopping_patience']}")
     
     # Initialize tracking variables
     train_losses = []
@@ -428,8 +417,150 @@ def main():
     logging.info(f"Training completed. Best validation accuracy: {best_acc:.2f}%")
     
     # Plot training curves
-    plot_path = os.path.join(output_dir, f"{args.model_type}_training_curves.png")
+    plot_path = os.path.join(output_dir, f"{model_type}_training_curves.png")
     plot_training_curves(train_losses, train_accs, val_losses, val_accs, plot_path)
+    
+    # Load best model for evaluation
+    best_model_path = os.path.join(checkpoint_dir, 'model_best.pth')
+    model.load_state_dict(torch.load(best_model_path)['state_dict'])
+    
+    # Evaluate on test set if available
+    test_results = None
+    if test_loader is not None:
+        logging.info(f"Evaluating {model_type} model on test set...")
+        evaluator = MobileNetV2Evaluator(model, test_loader, device)
+        test_results = evaluator.evaluate()
+        
+        # Save confusion matrix
+        cm_path = os.path.join(output_dir, f"{model_type}_confusion_matrix.png")
+        evaluator.plot_confusion_matrix(test_results, save_path=cm_path)
+        
+        # Save metrics plot
+        metrics_path = os.path.join(output_dir, f"{model_type}_metrics.png")
+        evaluator.plot_metrics(test_results, save_path=metrics_path)
+        
+        # Print test results
+        logging.info(f"Test accuracy: {test_results['accuracy']:.2f}%")
+    
+    return best_model_path, best_acc, test_results
+
+def main():
+    """Main training function."""
+    args = parse_args()
+    
+    # Set random seed for reproducibility
+    torch.manual_seed(args.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(args.seed)
+    
+    # Set up logging
+    if args.train_all:
+        log_name = f"train_all_{'enhanced' if args.enhanced_augmentation else 'standard'}"
+    else:
+        log_name = f"{args.model_type}_{'enhanced' if args.enhanced_augmentation else 'standard'}"
+    setup_logging(log_name, args.log_dir)
+    
+    # Set device
+    if args.device:
+        device = torch.device(args.device)
+    else:
+        use_cuda = not args.no_cuda and torch.cuda.is_available()
+        device = torch.device("cuda" if use_cuda else "cpu")
+    logging.info(f"Using device: {device}")
+    
+    # Get data configuration
+    data_config = get_data_config(args)
+    
+    # Load dataset
+    if args.enhanced_augmentation:
+        logging.info("Using enhanced data augmentation")
+        train_loader, val_loader, test_loader, num_classes = load_enhanced_dataset(
+            args.data_dir,
+            img_size=data_config['img_size'],
+            batch_size=data_config['batch_size'],
+            num_workers=data_config['num_workers'],
+            debug=args.debug
+        )
+    else:
+        logging.info("Using standard data augmentation")
+        train_loader, val_loader, test_loader, num_classes = load_dataset(
+            args.data_dir,
+            img_size=data_config['img_size'],
+            batch_size=data_config['batch_size'],
+            num_workers=data_config['num_workers'],
+            debug=args.debug
+        )
+    
+    logging.info(f"Dataset loaded with {num_classes} classes")
+    
+    if args.train_all:
+        # Train all models sequentially
+        logging.info("Training all models sequentially (base -> mish -> triplet -> cnsn)")
+        
+        # Create a summary table for results
+        results_summary = {
+            'model_type': [],
+            'best_val_acc': [],
+            'test_acc': [],
+            'model_size': [],
+            'checkpoint_path': []
+        }
+        
+        # Train each model type
+        for model_type in ['base', 'mish', 'triplet', 'cnsn']:
+            logging.info(f"\n{'='*80}\nTraining {model_type} model\n{'='*80}")
+            
+            # Train the model
+            best_model_path, best_val_acc, test_results = train_model(
+                args, model_type, train_loader, val_loader, test_loader, num_classes, device
+            )
+            
+            # Get model size
+            model = create_model(model_type, num_classes, pretrained=False)
+            model_size_mb = get_model_size(model)
+            
+            # Add results to summary
+            results_summary['model_type'].append(model_type)
+            results_summary['best_val_acc'].append(best_val_acc)
+            results_summary['test_acc'].append(test_results['accuracy'] if test_results else None)
+            results_summary['model_size'].append(model_size_mb)
+            results_summary['checkpoint_path'].append(best_model_path)
+        
+        # Print results summary
+        logging.info("\n" + "="*80)
+        logging.info("TRAINING RESULTS SUMMARY")
+        logging.info("="*80)
+        logging.info(f"{'Model Type':<10} | {'Val Acc (%)':<12} | {'Test Acc (%)':<12} | {'Size (MB)':<10} | {'Best Checkpoint'}")
+        logging.info("-"*80)
+        
+        for i in range(len(results_summary['model_type'])):
+            logging.info(
+                f"{results_summary['model_type'][i]:<10} | "
+                f"{results_summary['best_val_acc'][i]:<12.2f} | "
+                f"{results_summary['test_acc'][i]:<12.2f} | "
+                f"{results_summary['model_size'][i]:<10.2f} | "
+                f"{results_summary['checkpoint_path'][i]}"
+            )
+        
+        # Save results to CSV
+        import csv
+        results_path = os.path.join('experiments', 'all_models_results.csv')
+        with open(results_path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Model Type', 'Validation Accuracy (%)', 'Test Accuracy (%)', 'Model Size (MB)', 'Best Checkpoint'])
+            for i in range(len(results_summary['model_type'])):
+                writer.writerow([
+                    results_summary['model_type'][i],
+                    f"{results_summary['best_val_acc'][i]:.2f}",
+                    f"{results_summary['test_acc'][i]:.2f}" if results_summary['test_acc'][i] else "N/A",
+                    f"{results_summary['model_size'][i]:.2f}",
+                    results_summary['checkpoint_path'][i]
+                ])
+        
+        logging.info(f"Results summary saved to {results_path}")
+    else:
+        # Train a single model
+        train_model(args, args.model_type, train_loader, val_loader, test_loader, num_classes, device)
 
 if __name__ == "__main__":
     main()
