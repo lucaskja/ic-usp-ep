@@ -4,52 +4,37 @@ This project implements and evaluates several improvements to the MobileNetV2 ar
 
 ## Project Structure
 
+The project has been reorganized with a unified structure:
+
 ```
 mobilenetv2_improvements/
-├── base_mobilenetv2/     # Base MobileNetV2 implementation
+├── base_mobilenetv2/     # Base MobileNetV2 model definition
+│   └── models/           # Model architecture implementation
 ├── stage1_mish/          # MobileNetV2 with Mish activation
+│   └── models/           # Model architecture implementation
 ├── stage2_triplet/       # MobileNetV2 with Mish and Triplet Attention
+│   └── models/           # Model architecture implementation
 ├── stage3_cnsn/          # MobileNetV2 with Mish, Triplet Attention, and CNSN
-├── datasets/             # Dataset storage (not tracked by git)
-├── docs/                 # Documentation
-│   └── model_comparison/ # Framework comparison documentation
-├── experiments/          # Experiment results and logs
-│   ├── model_comparison/ # Framework comparison scripts
-│   ├── enhanced/         # Results with enhanced augmentation
-│   └── visualizations/   # Data augmentation visualizations
-├── utils/                # Utility functions
+│   └── models/           # Model architecture implementation
+├── configs/              # Unified configuration files
+│   └── model_configs.py  # Configuration for all model variants
+├── utils/                # Unified utility functions
 │   ├── data_utils.py     # Standard data loading utilities
 │   ├── enhanced_data_utils.py # Enhanced data augmentation
+│   ├── evaluator.py      # Unified model evaluation
+│   ├── model_factory.py  # Factory pattern for model creation
+│   ├── model_utils.py    # Model utility functions
+│   ├── training_utils.py # Training utility functions
 │   └── visualize_transforms.py # Visualization tools for data transforms
-├── train_enhanced.py     # Unified training script with enhanced augmentation
-└── tests/                # Test cases
+├── datasets/             # Dataset storage (not tracked by git)
+├── checkpoints/          # Model checkpoints (organized by model type)
+├── experiments/          # Experiment results and logs
+├── logs/                 # Training and evaluation logs
+├── docs/                 # Documentation
+├── tests/                # Test cases
+├── train.py              # Unified training script for all models
+└── evaluate.py           # Unified evaluation script for all models
 ```
-
-## Recent Updates
-
-### Enhanced Data Augmentation
-
-We've added enhanced data augmentation techniques to improve model generalization and prevent overfitting:
-
-- **Stronger Augmentations**: More aggressive transformations including perspective changes, affine transformations, random erasing, and stronger color jittering
-- **Visualization Tools**: New utilities to visualize how data augmentation affects training images
-- **Unified Training Script**: A single script to train any model variant with enhanced augmentation
-
-#### Enhanced Augmentation Techniques
-
-The enhanced data augmentation pipeline includes:
-
-- RandomResizedCrop with scale variation (70-100%)
-- RandomHorizontalFlip (50% probability)
-- RandomVerticalFlip (30% probability)
-- RandomRotation (up to 20 degrees)
-- ColorJitter (brightness, contrast, saturation, hue)
-- RandomAffine (translation and scaling)
-- RandomPerspective (perspective transformations)
-- RandomGrayscale (10% probability)
-- RandomErasing (simulates occlusion)
-
-These techniques significantly increase the effective size of the training dataset by creating diverse variations of each image, helping the model learn more robust features.
 
 ## Model Improvements
 
@@ -92,8 +77,6 @@ Integrates CrossNorm and SelfNorm modules:
   - Uses attention functions to recalibrate statistics
   - Processes each channel independently
 
-For more detailed descriptions of each model, see [model_descriptions.md](model_descriptions.md).
-
 ## Setup Instructions
 
 ### Environment Setup
@@ -115,9 +98,9 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### GPU Acceleration Setup (Windows with NVIDIA GPUs)
+### GPU Acceleration Setup
 
-For faster training with NVIDIA GPUs (e.g., RTX 4060 Ti):
+For faster training with NVIDIA GPUs:
 
 1. Install CUDA Toolkit and cuDNN:
    - Download and install [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) (11.8 or 12.1 recommended)
@@ -126,7 +109,7 @@ For faster training with NVIDIA GPUs (e.g., RTX 4060 Ti):
 2. Install GPU-enabled PyTorch:
 ```bash
 # Activate your virtual environment first
-venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # For CUDA 11.8
 pip uninstall torch torchvision
@@ -138,210 +121,102 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
 3. Verify GPU detection:
 ```bash
-# Create and run a test script
-echo "import torch; print(f'CUDA available: {torch.cuda.is_available()}'); print(f'Device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"CPU\"}')" > test_gpu.py
-python test_gpu.py
+python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}'); print(f'Device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"CPU\"}')"
 ```
 
 ### Dataset Preparation
 
-1. Download a leaf disease dataset (e.g., Plant Village, PlantDoc)
-2. Organize it according to the structure in [dataset_structure.md](dataset_structure.md)
+1. Download a leaf disease dataset (e.g., Plant Village, PlantDoc, Rice Leaf Disease Dataset)
+2. Organize it according to the following structure:
+```
+datasets/
+└── leaf_disease/
+    ├── class1/
+    │   ├── img001.jpg
+    │   ├── img002.jpg
+    │   └── ...
+    ├── class2/
+    │   ├── img001.jpg
+    │   ├── img002.jpg
+    │   └── ...
+    └── ...
+```
 
-## Running the Models Locally
+The dataset will be automatically split into train, validation, and test sets when first used.
+
+## Running the Models
 
 ### Training
 
-To train the models with Holdout validation (80% training, 20% validation):
+All model variants are now trained using the unified `train.py` script:
 
 #### Basic Training Commands
 
 ```bash
 # Base MobileNetV2
-cd base_mobilenetv2
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001
+python train.py --data_dir datasets/leaf_disease --model_type base --epochs 60 --batch_size 32 --lr 0.001
 
 # MobileNetV2 with Mish
-cd stage1_mish
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001
+python train.py --data_dir datasets/leaf_disease --model_type mish --epochs 60 --batch_size 32 --lr 0.001
 
 # MobileNetV2 with Mish and Triplet Attention
-cd stage2_triplet
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001
+python train.py --data_dir datasets/leaf_disease --model_type triplet --epochs 60 --batch_size 32 --lr 0.001
 
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
-cd stage3_cnsn
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 32 --lr 0.001
+python train.py --data_dir datasets/leaf_disease --model_type cnsn --epochs 60 --batch_size 32 --lr 0.001
 ```
 
-#### GPU Training Commands (Linux/macOS)
-
-For systems with GPU acceleration:
+#### Training with Enhanced Data Augmentation
 
 ```bash
-# Base MobileNetV2 with GPU
-cd base_mobilenetv2
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish
-cd stage1_mish
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish and Triplet Attention
-cd stage2_triplet
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN
-cd stage3_cnsn
-source ../venv/bin/activate && python train.py --data_dir ../datasets/leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
+# Add --enhanced_augmentation flag to use enhanced data augmentation
+python train.py --data_dir datasets/leaf_disease --model_type base --enhanced_augmentation --epochs 60 --batch_size 32 --lr 0.001
 ```
 
-#### Windows GPU Training Commands
-
-For Windows with GPU acceleration:
+#### GPU Training Commands
 
 ```bash
-# Base MobileNetV2 with GPU
-cd base_mobilenetv2
-venv\Scripts\activate && python train.py --data_dir ..\datasets\leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish
-cd stage1_mish
-venv\Scripts\activate && python train.py --data_dir ..\datasets\leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish and Triplet Attention
-cd stage2_triplet
-venv\Scripts\activate && python train.py --data_dir ..\datasets\leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN
-cd stage3_cnsn
-venv\Scripts\activate && python train.py --data_dir ..\datasets\leaf_disease --epochs 50 --batch_size 64 --lr 0.001 --device cuda
+# Add --device cuda to use GPU acceleration
+python train.py --data_dir datasets/leaf_disease --model_type base --epochs 60 --batch_size 64 --lr 0.001 --device cuda
 ```
 
-#### Advanced Training with Enhanced Data Augmentation
-
-For training with enhanced data augmentation (recommended for better generalization):
+#### Training All Models Sequentially
 
 ```bash
-# Linux/macOS commands
-
-# Base MobileNetV2 with enhanced augmentation
-source venv/bin/activate && python train_enhanced.py --data_dir datasets/leaf_disease --model_type base --epochs 60 --batch_size 32 --lr 0.001
-
-# MobileNetV2 with Mish and enhanced augmentation
-source venv/bin/activate && python train_enhanced.py --data_dir datasets/leaf_disease --model_type mish --epochs 60 --batch_size 32 --lr 0.001
-
-# MobileNetV2 with Mish and Triplet Attention and enhanced augmentation
-source venv/bin/activate && python train_enhanced.py --data_dir datasets/leaf_disease --model_type triplet --epochs 60 --batch_size 32 --lr 0.001
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN and enhanced augmentation
-source venv/bin/activate && python train_enhanced.py --data_dir datasets/leaf_disease --model_type cnsn --epochs 60 --batch_size 32 --lr 0.001
-```
-
-#### GPU Training with Enhanced Augmentation (Linux/macOS)
-
-```bash
-# Base MobileNetV2 with enhanced augmentation on GPU
-source venv/bin/activate && python train_enhanced.py --data_dir datasets/leaf_disease --model_type base --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish and enhanced augmentation on GPU
-source venv/bin/activate && python train_enhanced.py --data_dir datasets/leaf_disease --model_type mish --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish and Triplet Attention and enhanced augmentation on GPU
-source venv/bin/activate && python train_enhanced.py --data_dir datasets/leaf_disease --model_type triplet --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN and enhanced augmentation on GPU
-source venv/bin/activate && python train_enhanced.py --data_dir datasets/leaf_disease --model_type cnsn --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-```
-
-#### Windows GPU Training with Enhanced Augmentation
-
-```bash
-# Base MobileNetV2 with enhanced augmentation on GPU
-venv\Scripts\activate && python train_enhanced.py --data_dir datasets\leaf_disease --model_type base --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish and enhanced augmentation on GPU
-venv\Scripts\activate && python train_enhanced.py --data_dir datasets\leaf_disease --model_type mish --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish and Triplet Attention and enhanced augmentation on GPU
-venv\Scripts\activate && python train_enhanced.py --data_dir datasets\leaf_disease --model_type triplet --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN and enhanced augmentation on GPU
-venv\Scripts\activate && python train_enhanced.py --data_dir datasets\leaf_disease --model_type cnsn --epochs 60 --batch_size 64 --lr 0.001 --device cuda
+# Use --train_all flag to train all models in sequence (base -> mish -> triplet -> cnsn)
+python train.py --data_dir datasets/leaf_disease --train_all --epochs 60 --batch_size 32 --lr 0.001 --device cuda
 ```
 
 ### Evaluation
 
-To evaluate the models on the test set using the unified evaluation script:
+All model variants are evaluated using the unified `evaluate.py` script:
 
 ```bash
 # Base MobileNetV2
-source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type base --checkpoint checkpoints/base/best.pth
+python evaluate.py --data_dir datasets/leaf_disease --model_type base --checkpoint checkpoints/base/model_best.pth
 
 # MobileNetV2 with Mish
-source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type mish --checkpoint checkpoints/mish/best.pth
+python evaluate.py --data_dir datasets/leaf_disease --model_type mish --checkpoint checkpoints/mish/model_best.pth
 
 # MobileNetV2 with Mish and Triplet Attention
-source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type triplet --checkpoint checkpoints/triplet/best.pth
+python evaluate.py --data_dir datasets/leaf_disease --model_type triplet --checkpoint checkpoints/triplet/model_best.pth
 
 # MobileNetV2 with Mish, Triplet Attention, and CNSN
-source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type cnsn --checkpoint checkpoints/cnsn/best.pth
+python evaluate.py --data_dir datasets/leaf_disease --model_type cnsn --checkpoint checkpoints/cnsn/model_best.pth
 ```
 
-#### Enhanced Preprocessing Evaluation
-
-To evaluate models with enhanced preprocessing:
+#### Evaluation with Enhanced Preprocessing
 
 ```bash
-# Base MobileNetV2 with enhanced preprocessing
-source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type base --checkpoint checkpoints/base/best.pth --enhanced_preprocessing
-
-# MobileNetV2 with Mish and enhanced preprocessing
-source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type mish --checkpoint checkpoints/mish/best.pth --enhanced_preprocessing
+# Add --enhanced_preprocessing flag to use enhanced preprocessing
+python evaluate.py --data_dir datasets/leaf_disease --model_type base --checkpoint checkpoints/base/model_best.pth --enhanced_preprocessing
 ```
 
-#### GPU Evaluation Commands (Linux/macOS)
+#### GPU Evaluation Commands
 
 ```bash
-# Base MobileNetV2 with GPU
-source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type base --checkpoint checkpoints/base/best.pth --device cuda
-
-# MobileNetV2 with Mish with GPU
-source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type mish --checkpoint checkpoints/mish/best.pth --device cuda
-
-# MobileNetV2 with Mish and Triplet Attention with GPU
-source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type triplet --checkpoint checkpoints/triplet/best.pth --device cuda
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN with GPU
-source venv/bin/activate && python evaluate.py --data_dir datasets/leaf_disease/test --model_type cnsn --checkpoint checkpoints/cnsn/best.pth --device cuda
-```
-
-#### Windows GPU Evaluation Commands
-
-```bash
-# Base MobileNetV2 with GPU
-venv\Scripts\activate && python evaluate.py --data_dir datasets\leaf_disease\test --model_type base --checkpoint checkpoints\base\best.pth --device cuda
-
-# MobileNetV2 with Mish with GPU
-venv\Scripts\activate && python evaluate.py --data_dir datasets\leaf_disease\test --model_type mish --checkpoint checkpoints\mish\best.pth --device cuda
-
-# MobileNetV2 with Mish and Triplet Attention with GPU
-venv\Scripts\activate && python evaluate.py --data_dir datasets\leaf_disease\test --model_type triplet --checkpoint checkpoints\triplet\best.pth --device cuda
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN with GPU
-venv\Scripts\activate && python evaluate.py --data_dir datasets\leaf_disease\test --model_type cnsn --checkpoint checkpoints\cnsn\best.pth --device cuda
-```
-
-### Visualization and Analysis
-
-To generate visualizations and performance comparisons:
-
-```bash
-# Linux/macOS
-source venv/bin/activate && python analyze.py --results_dir experiments/results --output_dir experiments/visualizations
-
-# Windows
-venv\Scripts\activate && python analyze.py --results_dir experiments\results --output_dir experiments\visualizations
+# Add --device cuda to use GPU acceleration
+python evaluate.py --data_dir datasets/leaf_disease --model_type base --checkpoint checkpoints/base/model_best.pth --device cuda
 ```
 
 ### Data Augmentation Visualization
@@ -349,96 +224,21 @@ venv\Scripts\activate && python analyze.py --results_dir experiments\results --o
 To visualize how data augmentation affects your training images:
 
 ```bash
-# Linux/macOS commands
 # Visualize standard augmentations
-source venv/bin/activate && python utils/visualize_transforms.py --image_path datasets/leaf_disease/train/Bacterialblight/BACTERAILBLIGHT3_001.jpg --output_dir experiments/visualizations
+python utils/visualize_transforms.py --image_path datasets/leaf_disease/class1/img001.jpg --output_dir experiments/visualizations
 
 # Visualize enhanced augmentations
-source venv/bin/activate && python utils/visualize_transforms.py --image_path datasets/leaf_disease/train/Bacterialblight/BACTERAILBLIGHT3_001.jpg --output_dir experiments/visualizations --enhanced
-
-# Windows commands
-# Visualize standard augmentations
-venv\Scripts\activate && python utils\visualize_transforms.py --image_path datasets\leaf_disease\train\Bacterialblight\BACTERAILBLIGHT3_001.jpg --output_dir experiments\visualizations
-
-# Visualize enhanced augmentations
-venv\Scripts\activate && python utils\visualize_transforms.py --image_path datasets\leaf_disease\train\Bacterialblight\BACTERAILBLIGHT3_001.jpg --output_dir experiments\visualizations --enhanced
+python utils/visualize_transforms.py --image_path datasets/leaf_disease/class1/img001.jpg --output_dir experiments/visualizations --enhanced
 ```
 
-This will generate visualizations showing the original image alongside multiple augmented versions, helping you understand how your data is being transformed during training.
+## Dataset Split Strategy
 
-#### Linux/macOS Training Commands with Unified Script
+This project uses a three-way split strategy:
+1. **Test set**: 10% of the entire dataset
+2. **Training set**: 72% of the entire dataset (80% of the remaining 90%)
+3. **Validation set**: 18% of the entire dataset (20% of the remaining 90%)
 
-```bash
-# Base MobileNetV2 with standard augmentation
-source venv/bin/activate && python train.py --data_dir datasets/leaf_disease --model_type base --epochs 60 --batch_size 32 --lr 0.001
-
-# MobileNetV2 with Mish and standard augmentation
-source venv/bin/activate && python train.py --data_dir datasets/leaf_disease --model_type mish --epochs 60 --batch_size 32 --lr 0.001
-
-# MobileNetV2 with Mish and Triplet Attention and standard augmentation
-source venv/bin/activate && python train.py --data_dir datasets/leaf_disease --model_type triplet --epochs 60 --batch_size 32 --lr 0.001
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN and standard augmentation
-source venv/bin/activate && python train.py --data_dir datasets/leaf_disease --model_type cnsn --epochs 60 --batch_size 32 --lr 0.001
-
-# With enhanced augmentation (add --enhanced_augmentation flag)
-source venv/bin/activate && python train.py --data_dir datasets/leaf_disease --model_type base --enhanced_augmentation --epochs 60 --batch_size 32 --lr 0.001
-```
-
-#### Linux/macOS GPU Training Commands
-
-```bash
-# Base MobileNetV2 on GPU with enhanced augmentation
-source venv/bin/activate && python train.py --data_dir datasets/leaf_disease --model_type base --enhanced_augmentation --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish on GPU with enhanced augmentation
-source venv/bin/activate && python train.py --data_dir datasets/leaf_disease --model_type mish --enhanced_augmentation --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish and Triplet Attention on GPU with enhanced augmentation
-source venv/bin/activate && python train.py --data_dir datasets/leaf_disease --model_type triplet --enhanced_augmentation --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN on GPU with enhanced augmentation
-source venv/bin/activate && python train.py --data_dir datasets/leaf_disease --model_type cnsn --enhanced_augmentation --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-```
-
-#### Windows Training Commands with Unified Script
-
-```bash
-# Base MobileNetV2 with standard augmentation
-venv\Scripts\activate && python train.py --data_dir datasets\leaf_disease --model_type base --epochs 60 --batch_size 32 --lr 0.001
-
-# MobileNetV2 with Mish and standard augmentation
-venv\Scripts\activate && python train.py --data_dir datasets\leaf_disease --model_type mish --epochs 60 --batch_size 32 --lr 0.001
-
-# MobileNetV2 with Mish and Triplet Attention and standard augmentation
-venv\Scripts\activate && python train.py --data_dir datasets\leaf_disease --model_type triplet --epochs 60 --batch_size 32 --lr 0.001
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN and standard augmentation
-venv\Scripts\activate && python train.py --data_dir datasets\leaf_disease --model_type cnsn --epochs 60 --batch_size 32 --lr 0.001
-
-# With enhanced augmentation (add --enhanced_augmentation flag)
-venv\Scripts\activate && python train.py --data_dir datasets\leaf_disease --model_type base --enhanced_augmentation --epochs 60 --batch_size 32 --lr 0.001
-```
-
-#### Windows GPU Training Commands
-
-```bash
-# Base MobileNetV2 on GPU with enhanced augmentation
-venv\Scripts\activate && python train.py --data_dir datasets\leaf_disease --model_type base --enhanced_augmentation --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish on GPU with enhanced augmentation
-venv\Scripts\activate && python train.py --data_dir datasets\leaf_disease --model_type mish --enhanced_augmentation --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish and Triplet Attention on GPU with enhanced augmentation
-venv\Scripts\activate && python train.py --data_dir datasets\leaf_disease --model_type triplet --enhanced_augmentation --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN on GPU with enhanced augmentation
-venv\Scripts\activate && python train.py --data_dir datasets\leaf_disease --model_type cnsn --enhanced_augmentation --epochs 60 --batch_size 64 --lr 0.001 --device cuda
-```
-
-## Validation Strategy
-
-This project uses the Holdout method for model validation, with 80% of the data used for training and 20% for validation. This provides a simple and effective way to evaluate model performance while maintaining computational efficiency.
+The split is performed automatically when loading the dataset for the first time, creating separate directories for each split while maintaining the class structure.
 
 ## Testing
 
