@@ -15,7 +15,7 @@ class InvertedResidualWithTripletAttentionAndCNSN(nn.Module):
     """
     Inverted Residual block with Triplet Attention and CNSN.
     """
-    def __init__(self, inverted_residual_block, num_channels, crossnorm_mode='2-instance'):
+    def __init__(self, inverted_residual_block, num_channels, crossnorm_mode='2-instance', triplet_attention_kernel_size=7):
         """
         Initialize wrapper for inverted residual block.
         
@@ -23,10 +23,11 @@ class InvertedResidualWithTripletAttentionAndCNSN(nn.Module):
             inverted_residual_block: Original inverted residual block
             num_channels (int): Number of output channels
             crossnorm_mode (str): CrossNorm mode ('1-instance', '2-instance', or 'crop')
+            triplet_attention_kernel_size (int): Kernel size for Triplet Attention
         """
         super(InvertedResidualWithTripletAttentionAndCNSN, self).__init__()
         self.block = inverted_residual_block
-        self.attention = TripletAttention(kernel_size=7)
+        self.attention = TripletAttention(kernel_size=triplet_attention_kernel_size)
         self.cnsn = CNSN(num_channels, crossnorm_mode=crossnorm_mode, p=0.5)
         self.use_res_connect = self.block.use_res_connect
     
@@ -85,13 +86,14 @@ def get_output_channels(layer):
             return 32
 
 
-def add_triplet_attention_and_cnsn_to_mobilenetv2(model, crossnorm_mode='2-instance'):
+def add_triplet_attention_and_cnsn_to_mobilenetv2(model, crossnorm_mode='2-instance', triplet_attention_kernel_size=7):
     """
     Add Triplet Attention and CNSN to MobileNetV2 model.
     
     Args:
         model (nn.Module): MobileNetV2 model
         crossnorm_mode (str): CrossNorm mode ('1-instance', '2-instance', or 'crop')
+        triplet_attention_kernel_size (int): Kernel size for Triplet Attention
         
     Returns:
         nn.Module: MobileNetV2 model with Triplet Attention and CNSN
@@ -101,19 +103,25 @@ def add_triplet_attention_and_cnsn_to_mobilenetv2(model, crossnorm_mode='2-insta
         if hasattr(layer, 'conv'):  # Check if it's an inverted residual block
             # Get number of output channels
             num_channels = get_output_channels(layer)
-            model.features[i] = InvertedResidualWithTripletAttentionAndCNSN(layer, num_channels, crossnorm_mode)
+            model.features[i] = InvertedResidualWithTripletAttentionAndCNSN(
+                layer, 
+                num_channels, 
+                crossnorm_mode=crossnorm_mode,
+                triplet_attention_kernel_size=triplet_attention_kernel_size
+            )
     
     return model
 
 
-def create_mobilenetv2_cnsn(num_classes, pretrained=True, crossnorm_mode='2-instance'):
+def create_mobilenetv2_cnsn(num_classes, pretrained=True, cn_mode='2-instance', triplet_attention_kernel_size=7):
     """
     Create a MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
     
     Args:
         num_classes (int): Number of output classes
         pretrained (bool): Whether to use pretrained weights
-        crossnorm_mode (str): CrossNorm mode ('1-instance', '2-instance', or 'crop')
+        cn_mode (str): CrossNorm mode ('1-instance', '2-instance', or 'crop')
+        triplet_attention_kernel_size (int): Kernel size for Triplet Attention
         
     Returns:
         nn.Module: MobileNetV2 model with Mish, Triplet Attention, and CNSN
@@ -132,7 +140,11 @@ def create_mobilenetv2_cnsn(num_classes, pretrained=True, crossnorm_mode='2-inst
     model = replace_relu_with_mish(model)
     
     # Add Triplet Attention and CNSN
-    model = add_triplet_attention_and_cnsn_to_mobilenetv2(model, crossnorm_mode)
+    model = add_triplet_attention_and_cnsn_to_mobilenetv2(
+        model, 
+        crossnorm_mode=cn_mode,
+        triplet_attention_kernel_size=triplet_attention_kernel_size
+    )
     
     # Modify the classifier for our number of classes
     in_features = model.classifier[1].in_features

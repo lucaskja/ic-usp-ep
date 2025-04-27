@@ -33,27 +33,20 @@ MODEL_CONFIGS = {
         'name': 'Base MobileNetV2',
         'description': 'Standard MobileNetV2 architecture with ReLU6 activation',
         'params': {
-            'width_mult': 1.0,
-            'inverted_residual_setting': None,  # Use default
-            'round_nearest': 8,
+            # No additional parameters for base model
         }
     },
     'mish': {
         'name': 'MobileNetV2 with Mish',
         'description': 'MobileNetV2 with Mish activation function replacing ReLU6',
         'params': {
-            'width_mult': 1.0,
-            'inverted_residual_setting': None,  # Use default
-            'round_nearest': 8,
+            # No additional parameters for mish model
         }
     },
     'triplet': {
         'name': 'MobileNetV2 with Mish and Triplet Attention',
         'description': 'MobileNetV2 with Mish activation and Triplet Attention mechanism',
         'params': {
-            'width_mult': 1.0,
-            'inverted_residual_setting': None,  # Use default
-            'round_nearest': 8,
             'triplet_attention_kernel_size': 7,
         }
     },
@@ -61,9 +54,6 @@ MODEL_CONFIGS = {
         'name': 'MobileNetV2 with Mish, Triplet Attention, and CNSN',
         'description': 'MobileNetV2 with Mish, Triplet Attention, and CrossNorm-SelfNorm modules',
         'params': {
-            'width_mult': 1.0,
-            'inverted_residual_setting': None,  # Use default
-            'round_nearest': 8,
             'triplet_attention_kernel_size': 7,
             'cn_mode': '2-instance',  # CrossNorm mode: '1-instance', '2-instance', or 'crop'
         }
