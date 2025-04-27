@@ -47,8 +47,33 @@ mobilenetv2_improvements/
 ├── docs/                 # Documentation
 ├── tests/                # Test cases
 ├── train.py              # Unified training script for all models
+├── train_comparison.py   # Script to compare model variants with/without parameter reduction
 └── evaluate.py           # Unified evaluation script for all models
 ```
+
+## Running Model Comparison
+
+To compare all model variants with and without parameter reduction:
+
+```bash
+# Basic comparison
+python train_comparison.py --data_dir datasets/leaf_disease
+
+# With enhanced data augmentation
+python train_comparison.py --data_dir datasets/leaf_disease --enhanced_augmentation
+
+# With GPU acceleration
+python train_comparison.py --data_dir datasets/leaf_disease --device cuda
+```
+
+This will train and evaluate the following models:
+1. Base MobileNetV2 without parameter reduction (width_mult=1.0)
+2. Base MobileNetV2 with parameter reduction (width_mult=0.75)
+3. MobileNetV2 with Mish and parameter reduction (width_mult=0.75)
+4. MobileNetV2 with Mish, Triplet Attention and parameter reduction (width_mult=0.75)
+5. MobileNetV2 with Mish, Triplet Attention, CNSN and parameter reduction (width_mult=0.75)
+
+Results will be saved to `experiments/comparison/model_comparison_results.csv` with detailed metrics.
 
 ## Model Improvements
 
@@ -59,6 +84,7 @@ The foundation model with:
 - Depthwise separable convolutions
 - Linear bottlenecks
 - ReLU6 activation function
+- Optional width multiplier (default: 0.75) to reduce model size
 
 ### 2. MobileNetV2 with Mish Activation (Stage 1)
 
