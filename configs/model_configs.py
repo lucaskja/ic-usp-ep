@@ -55,7 +55,7 @@ MODEL_CONFIGS = {
         'name': 'MobileNetV2 with Mish, Triplet Attention, and CNSN',
         'description': 'MobileNetV2 with Mish, Triplet Attention, and CrossNorm-SelfNorm modules',
         'params': {
-            'triplet_attention_kernel_size': 7,
+            'kernel_size': 7,
             'width_mult': 0.75,  # Width multiplier to reduce model size
             'p': 0.5,  # CrossNorm probability
         }
