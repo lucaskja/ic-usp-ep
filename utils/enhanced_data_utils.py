@@ -89,8 +89,15 @@ def split_dataset(data_dir, output_dir=None, test_ratio=0.1, val_ratio=0.2, seed
     os.makedirs(val_dir, exist_ok=True)
     os.makedirs(test_dir, exist_ok=True)
     
-    # Get all class directories
-    class_dirs = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))]
+    # Get all class directories (excluding train, val, test directories)
+    class_dirs = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d)) and d not in ['train', 'val', 'test']]
+    
+    if not class_dirs:
+        logging.error(f"No valid class directories found in {data_dir}")
+        logging.info(f"Contents of {data_dir}: {os.listdir(data_dir)}")
+        raise ValueError(f"No valid class directories found in {data_dir}")
+    
+    logging.info(f"Found class directories: {class_dirs}")
     
     # Process each class
     for class_name in class_dirs:
@@ -174,14 +181,39 @@ def load_enhanced_dataset(data_dir, img_size=224, batch_size=32, num_workers=4, 
         logging.info(f"Dataset not split. Splitting into train, val, and test sets...")
         train_dir, val_dir, test_dir = split_dataset(data_dir)
     
-    # Load datasets
-    train_dataset = ImageFolder(train_dir, transform=train_transforms)
-    val_dataset = ImageFolder(val_dir, transform=val_transforms)
-    test_dataset = ImageFolder(test_dir, transform=test_transforms)
-    
-    # Ensure class indices are consistent across all datasets
-    val_dataset.class_to_idx = train_dataset.class_to_idx
-    test_dataset.class_to_idx = train_dataset.class_to_idx
+    # Load datasets - make sure we're loading from the correct directories
+    try:
+        # Check if there are actual class directories in the train/val/test directories
+        train_classes = [d for d in os.listdir(train_dir) if os.path.isdir(os.path.join(train_dir, d))]
+        if not train_classes:
+            raise ValueError(f"No class directories found in {train_dir}")
+            
+        train_dataset = ImageFolder(train_dir, transform=train_transforms)
+        val_dataset = ImageFolder(val_dir, transform=val_transforms)
+        test_dataset = ImageFolder(test_dir, transform=test_transforms)
+        
+        # Ensure class indices are consistent across all datasets
+        val_dataset.class_to_idx = train_dataset.class_to_idx
+        test_dataset.class_to_idx = train_dataset.class_to_idx
+        
+        logging.info(f"Loaded datasets from split directories: {len(train_dataset)} training, {len(val_dataset)} validation, {len(test_dataset)} test samples")
+    except (FileNotFoundError, ValueError) as e:
+        logging.error(f"Error loading datasets: {e}")
+        logging.info("Checking directory structure...")
+        
+        # Debug directory structure
+        for dir_path in [train_dir, val_dir, test_dir]:
+            if os.path.exists(dir_path):
+                classes = [d for d in os.listdir(dir_path) if os.path.isdir(os.path.join(dir_path, d))]
+                logging.info(f"Directory {dir_path} contains: {classes}")
+                
+                # Check if any class directory has images
+                for class_dir in classes:
+                    class_path = os.path.join(dir_path, class_dir)
+                    images = [f for f in os.listdir(class_path) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'))]
+                    logging.info(f"  - {class_dir}: {len(images)} images")
+        
+        raise
     
     # If in debug mode, use only a small subset of the data
     if debug:
