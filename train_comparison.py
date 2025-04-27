@@ -48,11 +48,11 @@ def parse_args():
                         help='Path to the dataset directory')
     
     # Training parameters
-    parser.add_argument('--epochs', type=int, default=30,
+    parser.add_argument('--epochs', type=int, default=60,
                         help='Number of epochs to train')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='Batch size')
-    parser.add_argument('--lr', type=float, default=0.01,
+    parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate')
     parser.add_argument('--early_stopping', type=int, default=10,
                         help='Patience for early stopping (0 to disable)')
