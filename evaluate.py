@@ -210,7 +210,10 @@ def main():
     
     # Print summary
     logging.info(f"Evaluation completed for {args.model_type} model")
-    logging.info(f"Accuracy: {results['accuracy']:.2f}%")
+    logging.info(f"Accuracy: {results['accuracy']:.5f}%")
+    logging.info(f"Precision: {results['precision']:.5f}%")
+    logging.info(f"Recall: {results['recall']:.5f}%")
+    logging.info(f"F1: {results['f1']:.5f}%")
     logging.info(f"Results saved to {output_dir}")
 
 
