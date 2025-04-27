@@ -1,0 +1,4 @@
+Model Type,Validation Accuracy (%),Test Accuracy (%),Model Size (MB),Best Checkpoint
+mish,100.00,100.00,8.63,checkpoints\mish\best.pth
+triplet,99.63,99.83,8.65,checkpoints\triplet\best.pth
+cnsn,76.52,77.78,8.67,checkpoints\cnsn\best.pth

@@ -402,9 +402,9 @@ def train_model(args, model_type, train_loader, val_loader, test_loader, num_cla
     # Plot training curves
     plot_path = os.path.join(output_dir, f"{model_type}_training_curves.png")
     plot_training_curves(train_losses, train_accs, val_losses, val_accs, plot_path)
-    
+
     # Load best model for evaluation
-    best_model_path = os.path.join(checkpoint_dir, 'model_best.pth')
+    best_model_path = os.path.join(checkpoint_dir, 'best.pth')
     model.load_state_dict(torch.load(best_model_path)['state_dict'])
     
     # Evaluate on test set if available
@@ -491,6 +491,7 @@ def main():
         
         # Train each model type
         for model_type in ['base', 'mish', 'triplet', 'cnsn']:
+        # for model_type in ['mish', 'triplet', 'cnsn']:
             logging.info(f"\n{'='*80}\nTraining {model_type} model\n{'='*80}")
             
             # Train the model
