@@ -1,30 +1,22 @@
-2025-04-27 02:29:01,540 [INFO] - Train Epoch: 60/60 Loss: 0.1881 Acc@1: 93.39% Acc@5: 100.00%
-Validating: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 34/34 [00:16<00:00,  2.05it/s, loss=0.0422, acc@1=99.35%]
-2025-04-27 02:29:18,122 [INFO] - Validation: Loss: 0.0422 Acc@1: 99.35% Acc@5: 100.00%
-2025-04-27 02:29:18,123 [INFO] - Learning rate: 0.000000
-2025-04-27 02:29:18,173 [INFO] - Checkpoint saved to checkpoints\base\checkpoint_epoch_60.pth
-2025-04-27 02:29:18,173 [INFO] - Training completed. Best validation accuracy: 99.53%
-2025-04-27 02:29:18,433 [INFO] - Training curves saved to experiments\base\base_training_curves.png
+python train.py --data_dir datasets/rld --model_type cnsn --epochs 60 --batch_size 32 --lr 0.001
+2025-04-27 16:13:48,887 [INFO] - Logging initialized for cnsn_standard
+2025-04-27 16:13:48,888 [INFO] - Using device: cuda
+2025-04-27 16:13:48,888 [INFO] - Using standard data augmentation
+2025-04-27 16:13:48,912 [INFO] - Loaded datasets from split directories: 4269 training, 1069 validation, 594 test samples
+2025-04-27 16:13:48,913 [INFO] - Dataset loaded: 4269 training, 1069 validation, 594 test samples
+2025-04-27 16:13:48,913 [INFO] - Number of classes: 4
+2025-04-27 16:13:48,913 [INFO] - Dataset loaded with 4 classes
 Traceback (most recent call last):
-  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\train.py", line 549, in <module>
+  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\train.py", line 553, in <module>
     main()
     ~~~~^^
-  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\train.py", line 497, in main
-    best_model_path, best_val_acc, test_results = train_model(
-                                                  ~~~~~~~~~~~^
-        args, model_type, train_loader, val_loader, test_loader, num_classes, device
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\train.py", line 408, in train_model
-    model.load_state_dict(torch.load(best_model_path)['state_dict'])
-                          ~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\venv\Lib\site-packages\torch\serialization.py", line 1479, in load
-    with _open_file_like(f, "rb") as opened_file:
-         ~~~~~~~~~~~~~~~^^^^^^^^^
-  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\venv\Lib\site-packages\torch\serialization.py", line 759, in _open_file_like
-    return _open_file(name_or_buffer, mode)
-  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\venv\Lib\site-packages\torch\serialization.py", line 740, in __init__
-    super().__init__(open(name, mode))
-                     ~~~~^^^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory: 'checkpoints\\base\\model_best.pth'
+  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\train.py", line 550, in main
+    train_model(args, args.model_type, train_loader, val_loader, test_loader, num_classes, device)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\train.py", line 279, in train_model
+    model = create_model(model_type, num_classes, pretrained=args.pretrained)
+  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\train.py", line 123, in create_model
+    return factory_create_model(model_type, num_classes, pretrained)
+  File "C:\Users\lucas\OneDrive\Documentos\USP\ic-usp-ep\utils\model_factory.py", line 58, in create_model
+    model = create_mobilenetv2_cnsn(num_classes, pretrained, **model_params)
+TypeError: create_mobilenetv2_cnsn() got an unexpected keyword argument 'triplet_attention_kernel_size'
