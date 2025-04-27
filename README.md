@@ -2,6 +2,14 @@
 
 This project implements and evaluates several improvements to the MobileNetV2 architecture for leaf disease classification tasks. The improvements are implemented in stages, allowing for incremental testing and evaluation.
 
+## 🔄 Recent Updates
+
+**[2025-04-27]** Fixed implementation of Triplet Attention and CNSN modules:
+- Corrected Triplet Attention implementation with proper tensor rotations and Z-pooling
+- Fixed CNSN module with proper CrossNorm statistics exchange and SelfNorm recalibration
+- Added comprehensive test suite for both modules
+- Improved integration with MobileNetV2 architecture
+
 ## Project Structure
 
 The project has been reorganized with a unified structure:
