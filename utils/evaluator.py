@@ -112,7 +112,7 @@ class ModelEvaluator:
             'probabilities': all_probs
         }
         
-        logging.info(f"Evaluation results: Accuracy={accuracy:.2f}%, Precision={precision*100:.2f}%, Recall={recall*100:.2f}%, F1={f1*100:.2f}%")
+        logging.info(f"Evaluation results: Accuracy={accuracy:.5f}%, Precision={precision*100:.5f}%, Recall={recall*100:.5f}%, F1={f1*100:.5f}%")
         
         return results
     
@@ -221,7 +221,7 @@ class ModelEvaluator:
         with open(report_path, 'w') as f:
             f.write(f"Model: MobileNetV2 ({model_type})\n")
             f.write(f"Model Size: {model_size_mb:.2f} MB\n")
-            f.write(f"Accuracy: {results['accuracy']:.2f}%\n\n")
+            f.write(f"Accuracy: {results['accuracy']:.5f}%\n\n")
             f.write("Classification Report:\n")
             
             # Write per-class metrics

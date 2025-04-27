@@ -111,8 +111,8 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device, epoch=0, 
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
-    top1 = AverageMeter('Acc@1', ':6.2f')
-    top5 = AverageMeter('Acc@5', ':6.2f')
+    top1 = AverageMeter('Acc@1', ':6.5f')
+    top5 = AverageMeter('Acc@5', ':6.5f')
     
     # Switch to train mode
     model.train()
@@ -152,13 +152,13 @@ def train_one_epoch(model, train_loader, criterion, optimizer, device, epoch=0, 
         # Update progress bar
         pbar.set_postfix({
             'loss': f"{losses.avg:.4f}",
-            'acc@1': f"{top1.avg:.2f}%",
+            'acc@1': f"{top1.avg:.5f}%",
             'time': f"{batch_time.avg:.3f}s"
         })
     
     # Log epoch results
     logging.info(f"Train Epoch: {epoch+1}/{total_epochs if total_epochs > 0 else '?'} "
-                f"Loss: {losses.avg:.4f} Acc@1: {top1.avg:.2f}% Acc@5: {top5.avg:.2f}%")
+                f"Loss: {losses.avg:.4f} Acc@1: {top1.avg:.5f}% Acc@5: {top5.avg:.5f}%")
     
     return {'loss': losses.avg, 'acc1': top1.avg, 'acc5': top5.avg}
 
@@ -178,8 +178,8 @@ def validate(model, val_loader, criterion, device):
     """
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
-    top1 = AverageMeter('Acc@1', ':6.2f')
-    top5 = AverageMeter('Acc@5', ':6.2f')
+    top1 = AverageMeter('Acc@1', ':6.5f')
+    top5 = AverageMeter('Acc@5', ':6.5f')
     
     # Switch to evaluate mode
     model.eval()
@@ -211,11 +211,11 @@ def validate(model, val_loader, criterion, device):
             # Update progress bar
             pbar.set_postfix({
                 'loss': f"{losses.avg:.4f}",
-                'acc@1': f"{top1.avg:.2f}%"
+                'acc@1': f"{top1.avg:.5f}%"
             })
     
     # Log validation results
-    logging.info(f"Validation: Loss: {losses.avg:.4f} Acc@1: {top1.avg:.2f}% Acc@5: {top5.avg:.2f}%")
+    logging.info(f"Validation: Loss: {losses.avg:.4f} Acc@1: {top1.avg:.5f}% Acc@5: {top5.avg:.5f}%")
     
     return {'loss': losses.avg, 'acc1': top1.avg, 'acc5': top5.avg}
 

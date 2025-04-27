@@ -400,7 +400,7 @@ def train_model(args, model_type, train_loader, val_loader, test_loader, num_cla
             logging.info(f"Early stopping triggered after epoch {epoch+1}")
             break
     
-    logging.info(f"Training completed. Best validation accuracy: {best_acc:.2f}%")
+    logging.info(f"Training completed. Best validation accuracy: {best_acc:.5f}%")
     
     # Plot training curves
     plot_path = os.path.join(output_dir, f"{model_type}_training_curves.png")
@@ -426,7 +426,7 @@ def train_model(args, model_type, train_loader, val_loader, test_loader, num_cla
         evaluator.plot_metrics(test_results, save_path=metrics_path)
         
         # Print test results
-        logging.info(f"Test accuracy: {test_results['accuracy']:.2f}%")
+        logging.info(f"Test accuracy: {test_results['accuracy']:.5f}%")
     
     return best_model_path, best_acc, test_results
 
@@ -523,8 +523,8 @@ def main():
         for i in range(len(results_summary['model_type'])):
             logging.info(
                 f"{results_summary['model_type'][i]:<10} | "
-                f"{results_summary['best_val_acc'][i]:<12.2f} | "
-                f"{results_summary['test_acc'][i]:<12.2f} | "
+                f"{results_summary['best_val_acc'][i]:<12.5f} | "
+                f"{results_summary['test_acc'][i]:<12.5f} | "
                 f"{results_summary['model_size'][i]:<10.2f} | "
                 f"{results_summary['checkpoint_path'][i]}"
             )
@@ -538,8 +538,8 @@ def main():
             for i in range(len(results_summary['model_type'])):
                 writer.writerow([
                     results_summary['model_type'][i],
-                    f"{results_summary['best_val_acc'][i]:.2f}",
-                    f"{results_summary['test_acc'][i]:.2f}" if results_summary['test_acc'][i] else "N/A",
+                    f"{results_summary['best_val_acc'][i]:.5f}",
+                    f"{results_summary['test_acc'][i]:.5f}" if results_summary['test_acc'][i] else "N/A",
                     f"{results_summary['model_size'][i]:.2f}",
                     results_summary['checkpoint_path'][i]
                 ])
