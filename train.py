@@ -327,12 +327,15 @@ def train_model(args, model_type, train_loader, val_loader, test_loader, num_cla
     
     # Create early stopping object
     early_stopping = None
-    if args.train_all:
-        # Disable early stopping when training all models
-        logging.info("Early stopping disabled for sequential training mode")
-    elif train_config['early_stopping_patience'] > 0:
-        early_stopping = EarlyStopping(patience=train_config['early_stopping_patience'])
-        logging.info(f"Early stopping enabled with patience {train_config['early_stopping_patience']}")
+    # if args.train_all:
+    #     # Disable early stopping when training all models
+    #     logging.info("Early stopping disabled for sequential training mode")
+    # elif train_config['early_stopping_patience'] > 0:
+    #     early_stopping = EarlyStopping(patience=train_config['early_stopping_patience'])
+    #     logging.info(f"Early stopping enabled with patience {train_config['early_stopping_patience']}")
+        
+    early_stopping = EarlyStopping(patience=train_config['early_stopping_patience'])
+    logging.info(f"Early stopping enabled with patience {train_config['early_stopping_patience']}")
     
     # Initialize tracking variables
     train_losses = []
