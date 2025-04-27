@@ -23,18 +23,15 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import model variants
-from base_mobilenetv2.models.mobilenetv2 import create_mobilenetv2
-from stage1_mish.models.mobilenetv2_mish import create_mobilenetv2_mish
-from stage2_triplet.models.mobilenetv2_triplet import create_mobilenetv2_triplet
-from stage3_cnsn.models.mobilenetv2_cnsn import create_mobilenetv2_cnsn
+from utils.model_factory import create_model, load_model_from_checkpoint
 
 # Import utilities
 from utils.data_utils import load_dataset
 from utils.enhanced_data_utils import load_enhanced_dataset
 from utils.training_utils import train_one_epoch, validate, save_checkpoint, setup_logging, EarlyStopping
 from utils.model_utils import get_model_size, print_model_summary
-from base_mobilenetv2.configs.default_config import TRAIN_CONFIG, DATA_CONFIG
-from base_mobilenetv2.evaluation.evaluator import MobileNetV2Evaluator
+from configs.model_configs import TRAIN_CONFIG, DATA_CONFIG
+from utils.evaluator import ModelEvaluator
 
 def parse_args():
     """Parse command line arguments."""
@@ -122,22 +119,8 @@ def create_model(model_type, num_classes, pretrained=True):
     Returns:
         nn.Module: The created model
     """
-    if model_type == 'base':
-        model = create_mobilenetv2(num_classes, pretrained)
-        logging.info("Base MobileNetV2 model created")
-    elif model_type == 'mish':
-        model = create_mobilenetv2_mish(num_classes, pretrained)
-        logging.info("MobileNetV2 with Mish activation model created")
-    elif model_type == 'triplet':
-        model = create_mobilenetv2_triplet(num_classes, pretrained)
-        logging.info("MobileNetV2 with Mish and Triplet Attention model created")
-    elif model_type == 'cnsn':
-        model = create_mobilenetv2_cnsn(num_classes, pretrained)
-        logging.info("MobileNetV2 with Mish, Triplet Attention, and CNSN model created")
-    else:
-        raise ValueError(f"Unknown model type: {model_type}")
-    
-    return model
+    from utils.model_factory import create_model as factory_create_model
+    return factory_create_model(model_type, num_classes, pretrained)
 
 def get_data_config(args):
     """
@@ -428,7 +411,7 @@ def train_model(args, model_type, train_loader, val_loader, test_loader, num_cla
     test_results = None
     if test_loader is not None:
         logging.info(f"Evaluating {model_type} model on test set...")
-        evaluator = MobileNetV2Evaluator(model, test_loader, device)
+        evaluator = ModelEvaluator(model, test_loader, device)
         test_results = evaluator.evaluate()
         
         # Save confusion matrix

@@ -24,19 +24,16 @@ from datetime import datetime
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Import model variants
-from base_mobilenetv2.models.mobilenetv2 import create_mobilenetv2
-from stage1_mish.models.mobilenetv2_mish import create_mobilenetv2_mish
-from stage2_triplet.models.mobilenetv2_triplet import create_mobilenetv2_triplet
-from stage3_cnsn.models.mobilenetv2_cnsn import create_mobilenetv2_cnsn
+# Import model factory
+from utils.model_factory import create_model, load_model_from_checkpoint
 
 # Import utilities
 from utils.data_utils import load_dataset
 from utils.enhanced_data_utils import load_enhanced_dataset
 from utils.model_utils import get_model_size, print_model_summary
 from utils.training_utils import setup_logging
-from base_mobilenetv2.evaluation.evaluator import MobileNetV2Evaluator
-from base_mobilenetv2.configs.default_config import DATA_CONFIG
+from utils.evaluator import ModelEvaluator
+from configs.model_configs import DATA_CONFIG, EVAL_CONFIG
 
 
 def parse_args():
@@ -83,35 +80,6 @@ def parse_args():
     return parser.parse_args()
 
 
-def create_model(model_type, num_classes):
-    """
-    Create model based on type.
-    
-    Args:
-        model_type (str): Type of model to create ('base', 'mish', 'triplet', 'cnsn')
-        num_classes (int): Number of output classes
-        
-    Returns:
-        nn.Module: The created model
-    """
-    if model_type == 'base':
-        model = create_mobilenetv2(num_classes, pretrained=False)
-        logging.info("Base MobileNetV2 model created")
-    elif model_type == 'mish':
-        model = create_mobilenetv2_mish(num_classes, pretrained=False)
-        logging.info("MobileNetV2 with Mish activation model created")
-    elif model_type == 'triplet':
-        model = create_mobilenetv2_triplet(num_classes, pretrained=False)
-        logging.info("MobileNetV2 with Mish and Triplet Attention model created")
-    elif model_type == 'cnsn':
-        model = create_mobilenetv2_cnsn(num_classes, pretrained=False)
-        logging.info("MobileNetV2 with Mish, Triplet Attention, and CNSN model created")
-    else:
-        raise ValueError(f"Unknown model type: {model_type}")
-    
-    return model
-
-
 def get_data_config(args):
     """
     Get data configuration with command line overrides.
@@ -156,40 +124,6 @@ def get_output_dir(args):
     return output_dir
 
 
-def save_detailed_report(results, model_type, model_size_mb, output_dir):
-    """
-    Save detailed evaluation report to file.
-    
-    Args:
-        results (dict): Evaluation results
-        model_type (str): Type of model
-        model_size_mb (float): Model size in MB
-        output_dir (str): Output directory
-    """
-    report = results['report']
-    report_path = os.path.join(output_dir, 'classification_report.txt')
-    
-    with open(report_path, 'w') as f:
-        f.write(f"Model: MobileNetV2 ({model_type})\n")
-        f.write(f"Model Size: {model_size_mb:.2f} MB\n")
-        f.write(f"Accuracy: {results['accuracy']:.2f}%\n\n")
-        f.write("Classification Report:\n")
-        
-        # Write per-class metrics
-        for cls, metrics in report.items():
-            if isinstance(metrics, dict):
-                f.write(f"{cls}:\n")
-                for metric_name, value in metrics.items():
-                    if isinstance(value, float):
-                        f.write(f"  {metric_name}: {value:.4f}\n")
-                    else:
-                        f.write(f"  {metric_name}: {value}\n")
-            else:
-                f.write(f"{cls}: {metrics}\n")
-    
-    logging.info(f"Detailed report saved to {report_path}")
-
-
 def main():
     """Main evaluation function."""
     args = parse_args()
@@ -215,40 +149,32 @@ def main():
     # Load dataset
     if args.enhanced_preprocessing:
         logging.info("Using enhanced data preprocessing")
-        _, val_loader, num_classes = load_enhanced_dataset(
+        train_loader, val_loader, test_loader, num_classes = load_enhanced_dataset(
             args.data_dir,
             img_size=data_config['img_size'],
             batch_size=data_config['batch_size'],
-            val_split=data_config['val_split'],
             num_workers=data_config['num_workers'],
             debug=args.debug
         )
+        # Use test loader for evaluation
+        eval_loader = test_loader
     else:
         logging.info("Using standard data preprocessing")
-        _, val_loader, num_classes = load_dataset(
+        train_loader, val_loader, test_loader, num_classes = load_dataset(
             args.data_dir,
             img_size=data_config['img_size'],
             batch_size=data_config['batch_size'],
-            val_split=data_config['val_split'],
             num_workers=data_config['num_workers'],
             debug=args.debug
         )
+        # Use test loader for evaluation
+        eval_loader = test_loader
     
     logging.info(f"Dataset loaded with {num_classes} classes")
     
-    # Create model
-    model = create_model(args.model_type, num_classes)
-    
-    # Load checkpoint
+    # Load model from checkpoint
     try:
-        checkpoint = torch.load(args.checkpoint, map_location=device)
-        
-        # Handle different checkpoint formats
-        if 'state_dict' in checkpoint:
-            model.load_state_dict(checkpoint['state_dict'])
-        else:
-            model.load_state_dict(checkpoint)
-            
+        model = load_model_from_checkpoint(args.model_type, num_classes, args.checkpoint, device)
         logging.info(f"Loaded checkpoint from {args.checkpoint}")
     except Exception as e:
         logging.error(f"Error loading checkpoint: {e}")
@@ -259,11 +185,8 @@ def main():
     model_size_mb = get_model_size(model)
     logging.info(f"Model Size: {model_size_mb:.2f} MB")
     
-    # Move model to device
-    model = model.to(device)
-    
     # Create evaluator
-    evaluator = MobileNetV2Evaluator(model, val_loader, device)
+    evaluator = ModelEvaluator(model, eval_loader, device)
     
     # Evaluate model
     logging.info("Evaluating model...")
@@ -283,7 +206,7 @@ def main():
     logging.info(f"Metrics plot saved to {metrics_path}")
     
     # Save detailed report
-    save_detailed_report(results, args.model_type, model_size_mb, output_dir)
+    evaluator.save_detailed_report(results, args.model_type, model_size_mb, output_dir)
     
     # Print summary
     logging.info(f"Evaluation completed for {args.model_type} model")
