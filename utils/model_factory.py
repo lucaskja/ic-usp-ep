@@ -13,8 +13,8 @@ import torch.nn as nn
 
 from base_mobilenetv2.models.mobilenetv2 import create_mobilenetv2
 from stage1_mish.models.mobilenetv2_mish import create_mobilenetv2_mish
-from stage2_triplet.models.mobilenetv2_triplet import create_mobilenetv2_triplet
-from stage3_cnsn.models.mobilenetv2_cnsn import create_mobilenetv2_cnsn
+from stage2_triplet.models.mobilenetv2_triplet_fixed import create_mobilenetv2_triplet
+from stage3_cnsn.models.mobilenetv2_cnsn_fixed import create_mobilenetv2_cnsn
 from configs.model_configs import get_model_config
 
 

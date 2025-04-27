@@ -493,8 +493,8 @@ def main():
         }
         
         # Train each model type
-        for model_type in ['base', 'mish', 'triplet', 'cnsn']:
-        # for model_type in ['mish', 'triplet', 'cnsn']:
+        # for model_type in ['base', 'mish', 'triplet', 'cnsn']:
+        for model_type in ['triplet', 'cnsn']:
             logging.info(f"\n{'='*80}\nTraining {model_type} model\n{'='*80}")
             
             # Train the model
