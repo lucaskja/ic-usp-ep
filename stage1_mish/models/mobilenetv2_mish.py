@@ -9,13 +9,14 @@ from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
 from stage1_mish.models.mish import replace_relu_with_mish
 
 
-def create_mobilenetv2_mish(num_classes, pretrained=True):
+def create_mobilenetv2_mish(num_classes, pretrained=True, width_mult=0.75):
     """
     Create a MobileNetV2 model with Mish activation.
     
     Args:
         num_classes (int): Number of output classes
         pretrained (bool): Whether to use pretrained weights
+        width_mult (float): Width multiplier for the network (default: 0.75)
         
     Returns:
         nn.Module: MobileNetV2 model with Mish activation
@@ -25,10 +26,14 @@ def create_mobilenetv2_mish(num_classes, pretrained=True):
         print(f"Warning: Expected 3 classes for leaf disease dataset, but got {num_classes}. Using 3 classes.")
         num_classes = 3
         
-    if pretrained:
+    if pretrained and width_mult == 1.0:
+        # Pretrained weights are only available for width_mult=1.0
         model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
     else:
-        model = mobilenet_v2(weights=None)
+        # For custom width_mult, we can't use pretrained weights
+        model = mobilenet_v2(weights=None, width_mult=width_mult)
+        if pretrained and width_mult != 1.0:
+            print(f"Warning: Pretrained weights are only available for width_mult=1.0. Using random initialization for width_mult={width_mult}.")
     
     # Replace ReLU6 with Mish
     model = replace_relu_with_mish(model)
@@ -47,16 +52,17 @@ class MobileNetV2MishModel(nn.Module):
     """
     Wrapper class for MobileNetV2 model with Mish activation.
     """
-    def __init__(self, num_classes, pretrained=True):
+    def __init__(self, num_classes, pretrained=True, width_mult=0.75):
         """
         Initialize MobileNetV2 model with Mish activation.
         
         Args:
             num_classes (int): Number of output classes
             pretrained (bool): Whether to use pretrained weights
+            width_mult (float): Width multiplier for the network (default: 0.75)
         """
         super(MobileNetV2MishModel, self).__init__()
-        self.model = create_mobilenetv2_mish(num_classes, pretrained)
+        self.model = create_mobilenetv2_mish(num_classes, pretrained, width_mult)
         
     def forward(self, x):
         """

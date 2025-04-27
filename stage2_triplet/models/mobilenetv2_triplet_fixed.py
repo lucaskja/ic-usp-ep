@@ -106,7 +106,7 @@ def add_triplet_attention_to_mobilenetv2(model, kernel_size=7):
     return model
 
 
-def create_mobilenetv2_triplet(num_classes, pretrained=True, triplet_attention_kernel_size=7):
+def create_mobilenetv2_triplet(num_classes, pretrained=True, triplet_attention_kernel_size=7, width_mult=0.75):
     """
     Create a MobileNetV2 model with Mish activation and Triplet Attention.
     
@@ -114,14 +114,17 @@ def create_mobilenetv2_triplet(num_classes, pretrained=True, triplet_attention_k
         num_classes (int): Number of output classes
         pretrained (bool): Whether to use pretrained weights
         triplet_attention_kernel_size (int): Kernel size for Triplet Attention
+        width_mult (float): Width multiplier for the network (default: 0.75)
         
     Returns:
         nn.Module: MobileNetV2 model with Mish and Triplet Attention
     """
-    if pretrained:
+    if pretrained and width_mult == 1.0:
         model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
     else:
-        model = mobilenet_v2(weights=None)
+        model = mobilenet_v2(weights=None, width_mult=width_mult)
+        if pretrained and width_mult != 1.0:
+            print(f"Warning: Pretrained weights are only available for width_mult=1.0. Using random initialization for width_mult={width_mult}.")
     
     # Replace ReLU6 with Mish
     model = replace_relu_with_mish(model)
@@ -143,16 +146,17 @@ class MobileNetV2TripletModel(nn.Module):
     """
     Wrapper class for MobileNetV2 model with Mish activation and Triplet Attention.
     """
-    def __init__(self, num_classes, pretrained=True):
+    def __init__(self, num_classes, pretrained=True, width_mult=0.75):
         """
         Initialize MobileNetV2 model with Mish activation and Triplet Attention.
         
         Args:
             num_classes (int): Number of output classes
             pretrained (bool): Whether to use pretrained weights
+            width_mult (float): Width multiplier for the network (default: 0.75)
         """
         super(MobileNetV2TripletModel, self).__init__()
-        self.model = create_mobilenetv2_triplet(num_classes, pretrained)
+        self.model = create_mobilenetv2_triplet(num_classes, pretrained, width_mult=width_mult)
         
     def forward(self, x):
         """

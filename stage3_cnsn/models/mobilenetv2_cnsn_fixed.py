@@ -150,7 +150,7 @@ def add_triplet_attention_and_cnsn_to_mobilenetv2(model, kernel_size=7, p=0.5):
     return model
 
 
-def create_mobilenetv2_cnsn(num_classes, pretrained=True, kernel_size=7, p=0.5):
+def create_mobilenetv2_cnsn(num_classes, pretrained=True, kernel_size=7, p=0.5, width_mult=0.75):
     """
     Create a MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
     
@@ -159,14 +159,17 @@ def create_mobilenetv2_cnsn(num_classes, pretrained=True, kernel_size=7, p=0.5):
         pretrained (bool): Whether to use pretrained weights
         kernel_size (int): Kernel size for Triplet Attention
         p (float): Probability of applying CrossNorm during training
+        width_mult (float): Width multiplier for the network (default: 0.75)
         
     Returns:
         nn.Module: MobileNetV2 model with Mish, Triplet Attention, and CNSN
     """
-    if pretrained:
+    if pretrained and width_mult == 1.0:
         model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
     else:
-        model = mobilenet_v2(weights=None)
+        model = mobilenet_v2(weights=None, width_mult=width_mult)
+        if pretrained and width_mult != 1.0:
+            print(f"Warning: Pretrained weights are only available for width_mult=1.0. Using random initialization for width_mult={width_mult}.")
     
     # Replace ReLU6 with Mish
     model = replace_relu_with_mish(model)
@@ -192,7 +195,7 @@ class MobileNetV2CNSNModel(nn.Module):
     """
     Wrapper class for MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
     """
-    def __init__(self, num_classes, pretrained=True, p=0.5):
+    def __init__(self, num_classes, pretrained=True, p=0.5, width_mult=0.75):
         """
         Initialize MobileNetV2 model with Mish activation, Triplet Attention, and CNSN.
         
@@ -200,9 +203,10 @@ class MobileNetV2CNSNModel(nn.Module):
             num_classes (int): Number of output classes
             pretrained (bool): Whether to use pretrained weights
             p (float): Probability of applying CrossNorm during training
+            width_mult (float): Width multiplier for the network (default: 0.75)
         """
         super(MobileNetV2CNSNModel, self).__init__()
-        self.model = create_mobilenetv2_cnsn(num_classes, pretrained, p=p)
+        self.model = create_mobilenetv2_cnsn(num_classes, pretrained, p=p, width_mult=width_mult)
         
     def forward(self, x):
         """

@@ -4,6 +4,12 @@ This project implements and evaluates several improvements to the MobileNetV2 ar
 
 ## 🔄 Recent Updates
 
+**[2025-04-27]** Reduced model size by using width_mult=0.75:
+- Decreased model size by ~38.5% (from 8.7MB to 5.3MB)
+- Added width_mult parameter to all model variants
+- Updated model configurations to use reduced size by default
+- Added tests to verify size reduction
+
 **[2025-04-27]** Fixed implementation of Triplet Attention and CNSN modules:
 - Corrected Triplet Attention implementation with proper tensor rotations and Z-pooling
 - Fixed CNSN module with proper CrossNorm statistics exchange and SelfNorm recalibration
