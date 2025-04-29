@@ -64,9 +64,9 @@ def parse_args():
                         help='Number of workers for data loading')
     
     # Output parameters
-    parser.add_argument('--output_dir', type=str, default='experiments/comparison',
+    parser.add_argument('--output_dir', type=str, default='experiments/comparison/pv',
                         help='Directory to save results')
-    parser.add_argument('--checkpoint_dir', type=str, default='checkpoints/comparison',
+    parser.add_argument('--checkpoint_dir', type=str, default='checkpoints/comparison/pv',
                         help='Directory to save checkpoints')
     parser.add_argument('--log_dir', type=str, default='logs',
                         help='Directory to save logs')
