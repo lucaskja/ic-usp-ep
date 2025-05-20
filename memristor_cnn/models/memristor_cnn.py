@@ -275,8 +275,9 @@ class MemristorCNN(nn.Module):
         # Inverted residual blocks
         x = self.inverted_residual_blocks(x)
         
-        # Get the current number of channels
+        # Get the current number of channels and device
         current_channels = x.size(1)
+        device = x.device  # Get the device from the input tensor
         
         # Last conv layer - ensure input and output channels match
         if not hasattr(self, '_last_conv_fixed'):
@@ -286,7 +287,7 @@ class MemristorCNN(nn.Module):
                 nn.Conv2d(current_channels, last_channel, 1, stride=1, padding=0, bias=False),
                 nn.BatchNorm2d(last_channel),
                 Mish()
-            )
+            ).to(device)  # Move to the same device as the input tensor
             self._last_conv_fixed = True
         
         x = self.last_conv(x)
