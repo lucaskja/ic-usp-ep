@@ -24,7 +24,6 @@ class MemristorPE(nn.Module):
         dac_resolution (int): Resolution of the digital-to-analog converters.
         device (torch.device): Device to store the tensors.
     """
-    """
     
     def __init__(self, name, num_arrays=1, array_rows=128, array_cols=16, 
                  conductance_levels=15, read_voltage=0.2, programming_pulse_width=50,
