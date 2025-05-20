@@ -24,10 +24,6 @@ class MemristorPE(nn.Module):
         dac_resolution (int): Resolution of the digital-to-analog converters.
         device (torch.device): Device to store the tensors.
     """
-        array_cols (int): Number of columns in each crossbar array.
-        crossbars (nn.ModuleList): List of memristor crossbar arrays.
-        adc_resolution (int): Resolution of the analog-to-digital converters.
-        dac_resolution (int): Resolution of the digital-to-analog converters.
     """
     
     def __init__(self, name, num_arrays=1, array_rows=128, array_cols=16, 
