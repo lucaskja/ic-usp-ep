@@ -1,0 +1,20 @@
+{
+    "data_dir": "datasets/leaf_disease_test",
+    "enhanced_augmentation": false,
+    "num_classes": 4,
+    "width_mult": 0.75,
+    "ex_situ_epochs": 2,
+    "in_situ_epochs": 1,
+    "batch_size": 4,
+    "lr": 0.001,
+    "threshold": 0.1,
+    "weight_decay": 0.0001,
+    "checkpoint_dir": "checkpoints/memristor_cnn",
+    "results_dir": "results/memristor_cnn",
+    "resume": null,
+    "device": null,
+    "parallel_arrays": 3,
+    "skip_ex_situ": false,
+    "skip_in_situ": true,
+    "closed_loop": false
+}

@@ -1,0 +1,6 @@
+{
+    "accuracy": 25.0,
+    "loss": 1.3868915796279908,
+    "inference_time_ms": 222.91440963745117,
+    "total_samples": 20
+}
