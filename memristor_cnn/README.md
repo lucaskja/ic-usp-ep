@@ -216,3 +216,23 @@ python -m unittest discover -s tests
 ## License
 
 [MIT License](LICENSE)
+## Troubleshooting
+
+### CUDA Device Mismatch Error
+
+If you encounter the following error:
+```
+RuntimeError: Input type (torch.cuda.FloatTensor) and weight type (torch.FloatTensor) should be the same
+```
+
+This error occurs when tensors on different devices (CPU and GPU) are used together. The fix has been implemented in the latest version, which ensures all model components are moved to the same device.
+
+If you're still experiencing this issue:
+
+1. Make sure you're using the latest version of the code
+2. Verify that your GPU has enough memory for the model
+3. Try reducing the batch size with `--batch_size 32` or even smaller
+4. Check that your CUDA installation is working correctly with:
+   ```python
+   python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.device_count())"
+   ```

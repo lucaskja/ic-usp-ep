@@ -82,9 +82,11 @@ class MemristorPE(nn.Module):
         if not isinstance(weights_list, list):
             weights_list = [weights_list]
             
+        # Get the device from the first crossbar
+        device = next(self.crossbars.parameters()).device
+            
         # If fewer tensors than arrays, pad with zeros
         if len(weights_list) < self.num_arrays:
-            device = weights_list[0].device
             for _ in range(self.num_arrays - len(weights_list)):
                 weights_list.append(torch.zeros(self.array_rows, self.array_cols, device=device))
         
@@ -94,6 +96,8 @@ class MemristorPE(nn.Module):
         
         conductance_pairs = []
         for i, weights in enumerate(weights_list):
+            # Ensure weights are on the correct device
+            weights = weights.to(device)
             conductance_pair = self.crossbars[i].program_weights(weights)
             conductance_pairs.append(conductance_pair)
             

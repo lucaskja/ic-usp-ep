@@ -70,8 +70,8 @@ class MemristorCrossbar(nn.Module):
         Returns:
             tuple: Quantized positive and negative conductance values.
         """
-        # Ensure weights have the right shape
-        weights = weights.reshape(self.rows, self.cols)
+        # Ensure weights have the right shape and are on the correct device
+        weights = weights.to(self.device).reshape(self.rows, self.cols)
         
         # Split weights into positive and negative components
         weights_positive = torch.clamp(weights, min=0)

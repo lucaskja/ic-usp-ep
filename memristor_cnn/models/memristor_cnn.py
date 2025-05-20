@@ -205,6 +205,10 @@ class MemristorCNN(nn.Module):
         Args:
             device (torch.device, optional): Device to use for tensors.
         """
+        # If device is not specified, use the device of the model parameters
+        if device is None:
+            device = next(self.parameters()).device
+            
         # Create processing elements
         self.memristor_mapping.create_processing_element("PE1", num_arrays=4, device=device)
         self.memristor_mapping.create_processing_element("PE3", num_arrays=4, device=device)

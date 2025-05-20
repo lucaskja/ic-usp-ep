@@ -118,6 +118,7 @@ def main():
         num_classes=num_classes,
         width_mult=args.width_mult
     )
+    model = model.to(device)  # Move model to the specified device
     
     # Setup memristor mapping
     model.setup_memristor_mapping(device=device)

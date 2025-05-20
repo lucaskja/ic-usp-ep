@@ -104,6 +104,14 @@ class MemristorMapping:
         weights = conv_layer.weight.detach().clone()
         bias = conv_layer.bias.detach().clone() if conv_layer.bias is not None else None
         
+        # Get the device from the first PE
+        device = next(self.processing_elements[pe_names[0]].parameters()).device
+        
+        # Ensure weights are on the correct device
+        weights = weights.to(device)
+        if bias is not None:
+            bias = bias.to(device)
+        
         flat_weights = weights.reshape(-1)
         
         for i, pe_name in enumerate(pe_names):
