@@ -22,6 +22,12 @@ class MemristorPE(nn.Module):
         crossbars (nn.ModuleList): List of memristor crossbar arrays.
         adc_resolution (int): Resolution of the analog-to-digital converters.
         dac_resolution (int): Resolution of the digital-to-analog converters.
+        device (torch.device): Device to store the tensors.
+    """
+        array_cols (int): Number of columns in each crossbar array.
+        crossbars (nn.ModuleList): List of memristor crossbar arrays.
+        adc_resolution (int): Resolution of the analog-to-digital converters.
+        dac_resolution (int): Resolution of the digital-to-analog converters.
     """
     
     def __init__(self, name, num_arrays=1, array_rows=128, array_cols=16, 
@@ -51,6 +57,9 @@ class MemristorPE(nn.Module):
         self.adc_resolution = adc_resolution
         self.dac_resolution = dac_resolution
         
+        # Store the device
+        self.device = device if device is not None else torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        
         # Create multiple crossbar arrays
         self.crossbars = nn.ModuleList([
             MemristorCrossbar(
@@ -59,9 +68,12 @@ class MemristorPE(nn.Module):
                 conductance_levels=conductance_levels,
                 read_voltage=read_voltage,
                 programming_pulse_width=programming_pulse_width,
-                device=device
+                device=self.device
             ) for _ in range(num_arrays)
         ])
+        
+        # Register a dummy parameter to ensure the PE has parameters for device tracking
+        self.register_parameter('dummy_param', nn.Parameter(torch.zeros(1, device=self.device)))
         
     def program_weights(self, weights_list):
         """

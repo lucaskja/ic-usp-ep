@@ -209,6 +209,12 @@ class MemristorCNN(nn.Module):
         if device is None:
             device = next(self.parameters()).device
             
+        # Ensure we have a valid device
+        if device is None:
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            
+        print(f"Setting up memristor mapping on device: {device}")
+            
         # Create processing elements
         self.memristor_mapping.create_processing_element("PE1", num_arrays=4, device=device)
         self.memristor_mapping.create_processing_element("PE3", num_arrays=4, device=device)
