@@ -139,7 +139,7 @@ class SelfNorm(nn.Module):
         
         # Apply recalibration
         x_norm = (x - mean) / std
-        x_selfnorm = x_norm * std_weights + mean * mean_weights
+        x_selfnorm = x_norm * (std * std_weights) + mean * mean_weights
         
         return x_selfnorm
 
