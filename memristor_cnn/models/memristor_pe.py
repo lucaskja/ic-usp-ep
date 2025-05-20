@@ -89,8 +89,8 @@ class MemristorPE(nn.Module):
         if not isinstance(weights_list, list):
             weights_list = [weights_list]
             
-        # Get the device from the first crossbar
-        device = next(self.crossbars.parameters()).device
+        # Use the stored device attribute instead of trying to extract it from parameters
+        device = self.device
             
         # If fewer tensors than arrays, pad with zeros
         if len(weights_list) < self.num_arrays:
