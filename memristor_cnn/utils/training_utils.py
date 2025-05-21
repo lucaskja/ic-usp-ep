@@ -219,6 +219,15 @@ class HybridTrainer:
         # Set model to in-situ training mode
         self.model.set_hybrid_training_mode('in-situ')
         
+        # Freeze all layers except the classifier (FC layer)
+        for name, param in self.model.named_parameters():
+            if 'classifier' not in name:
+                param.requires_grad = False
+            else:
+                param.requires_grad = True
+                
+        print("Freezing all layers except classifier for in-situ training")
+        
         # Reset metrics for in-situ phase
         in_situ_train_losses = []
         in_situ_val_losses = []
@@ -319,6 +328,9 @@ class HybridTrainer:
         Returns:
             tuple: Average loss and accuracy.
         """
+        from ..models.weight_utils import quantize_15_level
+        from .memristor_utils import threshold_based_update
+        
         self.model.train()
         running_loss = 0.0
         correct = 0
@@ -336,23 +348,42 @@ class HybridTrainer:
                 x = self.model.avgpool(x)
                 features = x.view(x.size(0), -1)
             
-            # Apply threshold-based update to classifier
-            loss = self.model.threshold_based_update(
-                features, targets, learning_rate, threshold
-            )
+            # Forward pass through classifier
+            outputs = self.model.classifier(features)
+            loss = self.criterion(outputs, targets)
             
-            # Forward pass for accuracy calculation
+            # Calculate gradients
+            loss.backward()
+            
+            # Apply threshold-based update to classifier weights
             with torch.no_grad():
-                outputs = self.model(inputs)
-                _, predicted = outputs.max(1)
-                
+                for name, param in self.model.named_parameters():
+                    if param.grad is not None and 'classifier' in name:
+                        # Apply threshold-based update
+                        updated_weights = threshold_based_update(
+                            param.data, param.grad, learning_rate, threshold
+                        )
+                        
+                        # Quantize to 15 levels to simulate memristor constraints
+                        quantized_weights = quantize_15_level(updated_weights)
+                        
+                        # Update weights
+                        param.copy_(quantized_weights)
+            
+            # Zero gradients
+            self.optimizer.zero_grad()
+            
             # Statistics
-            running_loss += loss * inputs.size(0)
+            running_loss += loss.item() * inputs.size(0)
+            _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
         
         # Calculate metrics
         epoch_loss = running_loss / total
+        epoch_acc = 100.0 * correct / total
+        
+        return epoch_loss, epoch_acc
         epoch_acc = 100.0 * correct / total
         
         return epoch_loss, epoch_acc

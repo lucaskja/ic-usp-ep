@@ -70,23 +70,21 @@ class MemristorCrossbar(nn.Module):
         Returns:
             tuple: Quantized positive and negative conductance values.
         """
+        # Import weight utilities
+        from .weight_utils import quantize_15_level, map_to_differential_pairs, compensate_device_variations
+        
         # Ensure weights have the right shape and are on the correct device
         weights = weights.to(self.device).reshape(self.rows, self.cols)
         
-        # Split weights into positive and negative components
-        weights_positive = torch.clamp(weights, min=0)
-        weights_negative = torch.clamp(-weights, min=0)
+        # Apply 15-level quantization
+        quantized_weights = quantize_15_level(weights)
         
-        # Quantize to discrete conductance levels
-        # Scale to [0, conductance_levels-1] range
-        max_weight = max(weights_positive.max().item(), weights_negative.max().item())
-        if max_weight > 0:
-            scale_factor = (self.conductance_levels - 1) / max_weight
-            conductance_positive = torch.round(weights_positive * scale_factor)
-            conductance_negative = torch.round(weights_negative * scale_factor)
-        else:
-            conductance_positive = torch.zeros_like(weights_positive)
-            conductance_negative = torch.zeros_like(weights_negative)
+        # Map to differential conductance pairs
+        conductance_positive, conductance_negative = map_to_differential_pairs(quantized_weights)
+        
+        # Compensate for device variations
+        conductance_positive = compensate_device_variations(conductance_positive)
+        conductance_negative = compensate_device_variations(conductance_negative)
         
         # Store the quantized conductance values
         self._conductance_positive = conductance_positive
