@@ -152,3 +152,56 @@ def calculate_memristor_energy(input_size, output_size, batch_size=1):
     total_energy_pJ = total_cells * read_energy_per_cell_pJ * batch_size
     
     return total_energy_pJ / 1000  # Convert to nJ
+
+def calculate_memristor_latency(input_size, output_size, batch_size=1, parallel_arrays=1):
+    """
+    Calculate latency for memristor-based computation.
+    
+    Args:
+        input_size (int): Number of input neurons.
+        output_size (int): Number of output neurons.
+        batch_size (int): Batch size.
+        parallel_arrays (int): Number of parallel arrays for computation.
+        
+    Returns:
+        float: Latency in nanoseconds.
+    """
+    # Latency parameters
+    read_latency_per_array_ns = 100  # 100 ns per array read operation
+    
+    # Calculate operations
+    total_ops = input_size * output_size
+    ops_per_array = (total_ops + parallel_arrays - 1) // parallel_arrays  # Ceiling division
+    
+    # Calculate latency
+    latency_ns = ops_per_array * read_latency_per_array_ns * batch_size / parallel_arrays
+    
+    return latency_ns
+
+
+def compare_energy_efficiency(memristor_energy_nJ, gpu_energy_nJ):
+    """
+    Compare energy efficiency between memristor and GPU implementations.
+    
+    Args:
+        memristor_energy_nJ (float): Energy consumption of memristor implementation in nJ.
+        gpu_energy_nJ (float): Energy consumption of GPU implementation in nJ.
+        
+    Returns:
+        float: Efficiency ratio (GPU energy / memristor energy).
+    """
+    return gpu_energy_nJ / memristor_energy_nJ
+
+
+def compare_latency(memristor_latency_ns, gpu_latency_ns):
+    """
+    Compare latency between memristor and GPU implementations.
+    
+    Args:
+        memristor_latency_ns (float): Latency of memristor implementation in ns.
+        gpu_latency_ns (float): Latency of GPU implementation in ns.
+        
+    Returns:
+        float: Latency reduction ratio (GPU latency / memristor latency).
+    """
+    return gpu_latency_ns / memristor_latency_ns
