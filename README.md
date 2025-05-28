@@ -4,6 +4,13 @@ This project implements and evaluates several improvements to the MobileNetV2 ar
 
 ## 🔄 Recent Updates
 
+**[2025-05-28]** Added MemTorch-based CNN implementation:
+- Implemented a complete CNN using MemTorch for memristor device modeling
+- Added hybrid training approach with ex-situ and in-situ phases
+- Integrated hardware-aware training with memristor constraints
+- Included energy efficiency and latency analysis tools
+- Created comprehensive documentation and tests
+
 **[2025-04-27]** Reduced model size by using width_mult=0.75:
 - Decreased model size by ~38.5% (from 8.7MB to 5.3MB)
 - Added width_mult parameter to all model variants
@@ -21,16 +28,29 @@ This project implements and evaluates several improvements to the MobileNetV2 ar
 The project has been reorganized with a unified structure:
 
 ```
-mobilenetv2_improvements/
-├── base_mobilenetv2/     # Base MobileNetV2 model definition
-│   └── models/           # Model architecture implementation
-├── stage1_mish/          # MobileNetV2 with Mish activation
-│   └── models/           # Model architecture implementation
-├── stage2_triplet/       # MobileNetV2 with Mish and Triplet Attention
-│   └── models/           # Model architecture implementation
-├── stage3_cnsn/          # MobileNetV2 with Mish, Triplet Attention, and CNSN
-│   └── models/           # Model architecture implementation
-├── configs/              # Unified configuration files
+project_root/
+├── mobilenetv2_improvements/  # MobileNetV2 improvements implementation
+│   ├── base_mobilenetv2/      # Base MobileNetV2 model definition
+│   │   └── models/            # Model architecture implementation
+│   ├── stage1_mish/           # MobileNetV2 with Mish activation
+│   │   └── models/            # Model architecture implementation
+│   ├── stage2_triplet/        # MobileNetV2 with Mish and Triplet Attention
+│   │   └── models/            # Model architecture implementation
+│   ├── stage3_cnsn/           # MobileNetV2 with Mish, Triplet Attention, and CNSN
+│   │   └── models/            # Model architecture implementation
+│   ├── configs/               # Unified configuration files
+│   └── utils/                 # Unified utility functions
+├── memristor_cnn/             # Custom memristor-based CNN implementation
+│   ├── models/                # Memristor model architecture
+│   └── utils/                 # Memristor utility functions
+├── memtorch_cnn/              # MemTorch-based CNN implementation
+│   ├── models/                # MemTorch model architecture
+│   ├── utils/                 # MemTorch utility functions
+│   └── tests/                 # Tests for MemTorch implementation
+├── datasets/                  # Dataset storage (not tracked by git)
+├── checkpoints/               # Model checkpoints (organized by model type)
+├── experiments/               # Experiment results and logs
+└── logs/                      # Training and evaluation logs
 │   └── model_configs.py  # Configuration for all model variants
 ├── utils/                # Unified utility functions
 │   ├── data_utils.py     # Standard data loading utilities
@@ -77,6 +97,8 @@ Results will be saved to `experiments/comparison/model_comparison_results.csv` w
 
 ## Model Improvements
 
+## Model Implementations
+
 ### 1. Base MobileNetV2
 
 The foundation model with:
@@ -98,6 +120,44 @@ Replaces ReLU6 with Mish activation function to enhance nonlinear characteristic
 
 Adds a three-branch attention structure for capturing cross-dimension interactions:
 - Three parallel branches focusing on different dimensional interactions:
+  - Branch 1: Channel-Height interaction
+  - Branch 2: Channel-Width interaction
+  - Branch 3: Standard spatial attention
+- Z-Pool operation combines max-pooling and average-pooling
+- No channel reduction, preserving full information flow
+- Parameter-efficient design with minimal computational overhead
+
+### 4. MobileNetV2 with Mish, Triplet Attention, and CNSN (Stage 3)
+
+Integrates CrossNorm and SelfNorm modules:
+- CrossNorm: Enlarges training distribution by exchanging channel-wise statistics
+  - Only active during training
+  - Creates diverse feature representations
+  - Multiple modes: 1-instance, 2-instance, and crop
+- SelfNorm: Bridges train-test distribution gap using an attention mechanism
+  - Active during both training and testing
+  - Uses attention functions to recalibrate statistics
+  - Processes each channel independently
+
+### 5. Memristor-based CNN Implementation
+
+Custom implementation of memristor-based CNN:
+- Uses simulated memristor crossbar arrays for computation
+- Implements differential conductance pairs for weight representation
+- Includes device variation and state drift simulation
+- Provides basic energy efficiency and latency analysis
+
+### 6. MemTorch-based CNN Implementation
+
+Advanced implementation using MemTorch framework:
+- Accurate memristor device modeling with LinearIonDrift model
+- Hardware-aware training with memristor constraints
+- Hybrid training approach:
+  - Ex-situ training on conventional hardware
+  - Weight transfer to memristor arrays
+  - In-situ fine-tuning with threshold-based updates
+- Comprehensive energy efficiency and latency analysis
+- Built-in support for device variations and non-idealities
   - Branch 1: Channel-Height interaction
   - Branch 2: Channel-Width interaction
   - Branch 3: Standard spatial attention
