@@ -72,7 +72,7 @@ class HybridTrainer:
         # Best validation accuracy
         self.best_acc = 0.0
     
-    def ex_situ_train(self, train_loader, val_loader, epochs=50, scheduler=None):
+    def ex_situ_train(self, train_loader, val_loader, epochs=50, scheduler=None, patience=20):
         """
         Perform ex-situ training (Phase 1).
         
@@ -81,6 +81,7 @@ class HybridTrainer:
             val_loader: Validation data loader.
             epochs: Number of training epochs.
             scheduler: Learning rate scheduler.
+            patience (int): Number of epochs to wait for improvement before early stopping.
             
         Returns:
             dict: Training history.
@@ -127,6 +128,14 @@ class HybridTrainer:
                 history['best_epoch'] = epoch
                 self._save_checkpoint(epoch, is_best=True, suffix='ex_situ')
                 print(f"New best model with validation accuracy: {val_acc:.2f}%")
+                counter = 0  # Reset counter when we find a better model
+            else:
+                counter += 1  # Increment counter when no improvement
+            
+            # Early stopping
+            if counter >= patience:
+                print(f"Early stopping triggered after {epoch+1} epochs (no improvement for {patience} epochs)")
+                break
         
         print(f"Ex-situ training completed. Best validation accuracy: {self.best_acc:.2f}%")
         

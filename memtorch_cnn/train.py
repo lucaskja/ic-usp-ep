@@ -47,6 +47,8 @@ def main():
                         help='Number of ex-situ training epochs')
     parser.add_argument('--in_situ_epochs', type=int, default=10,
                         help='Number of in-situ training epochs')
+    parser.add_argument('--patience', type=int, default=20,
+                        help='Number of epochs to wait for improvement before early stopping')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Initial learning rate')
     parser.add_argument('--weight_decay', type=float, default=1e-4,
@@ -151,7 +153,8 @@ def main():
             train_loader=train_loader,
             val_loader=val_loader,
             epochs=args.ex_situ_epochs,
-            scheduler=scheduler
+            scheduler=scheduler,
+            patience=args.patience
         )
         ex_situ_time = time.time() - start_time
         
