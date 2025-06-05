@@ -12,13 +12,19 @@ from tqdm import tqdm
 import os
 import json
 import matplotlib.pyplot as plt
+import sys
+import traceback
 
 # Try to import memtorch, but don't fail if it's not available
 try:
     import memtorch
     MEMTORCH_AVAILABLE = True
-except ImportError:
+    print(f"MemTorch successfully imported in trainer.py from {memtorch.__file__}")
+except ImportError as e:
     MEMTORCH_AVAILABLE = False
+    error_info = traceback.format_exc()
+    print(f"MemTorch import error in trainer.py:")
+    print(f"Error details: {str(e)}")
     print("MemTorch not available. Using simplified implementation.")
 
 class HybridTrainer:

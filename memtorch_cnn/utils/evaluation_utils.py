@@ -11,13 +11,19 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix, classification_report
 import os
 import json
+import sys
+import traceback
 
 # Try to import memtorch, but don't fail if it's not available
 try:
     import memtorch
     MEMTORCH_AVAILABLE = True
-except ImportError:
+    print(f"MemTorch successfully imported in evaluation_utils.py from {memtorch.__file__}")
+except ImportError as e:
     MEMTORCH_AVAILABLE = False
+    error_info = traceback.format_exc()
+    print(f"MemTorch import error in evaluation_utils.py:")
+    print(f"Error details: {str(e)}")
     print("MemTorch not available. Using simplified implementation.")
 
 
