@@ -148,6 +148,11 @@ class MemTorchCNN(nn.Module):
         """
         super(MemTorchCNN, self).__init__()
         
+        # Store configuration first
+        self.num_classes = num_classes
+        self.width_mult = width_mult
+        self.is_memristive = False
+        
         # Define input channels
         input_channel = int(32 * width_mult)
         last_channel = int(1280 * width_mult)
@@ -176,11 +181,6 @@ class MemTorchCNN(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(last_channel, num_classes)
         )
-        
-        # Store configuration
-        self.num_classes = num_classes
-        self.width_mult = width_mult
-        self.is_memristive = False
         
         # Initialize memristor simulator
         self.memristor_simulator = MemristorSimulator()
