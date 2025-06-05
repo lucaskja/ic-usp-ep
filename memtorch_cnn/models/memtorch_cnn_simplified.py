@@ -165,7 +165,7 @@ class MemTorchCNN(nn.Module):
         )
         
         # Inverted residual blocks
-        self.inverted_residual_blocks = self._build_inverted_residual_blocks(input_channel)
+        self.inverted_residual_blocks, input_channel = self._build_inverted_residual_blocks(input_channel)
         
         # Last conv layer
         self.last_conv = nn.Sequential(
@@ -196,7 +196,7 @@ class MemTorchCNN(nn.Module):
             input_channel (int): Number of input channels.
             
         Returns:
-            nn.Sequential: Sequence of inverted residual blocks.
+            tuple: (nn.Sequential of blocks, updated input channel count)
         """
         # MobileNetV2 configuration: [t, c, n, s]
         # t: expansion factor, c: output channels, n: repeat times, s: stride
@@ -212,6 +212,8 @@ class MemTorchCNN(nn.Module):
         ]
         
         blocks = []
+        current_channel = input_channel
+        
         for t, c, n, s in inverted_residual_setting:
             output_channel = int(c * self.width_mult)
             for i in range(n):
@@ -219,13 +221,13 @@ class MemTorchCNN(nn.Module):
                 
                 # Create inverted residual block
                 block = self._create_inverted_residual_block(
-                    input_channel, output_channel, stride, t
+                    current_channel, output_channel, stride, t
                 )
                 blocks.append(block)
                 
-                input_channel = output_channel
+                current_channel = output_channel
                 
-        return nn.Sequential(*blocks)
+        return nn.Sequential(*blocks), current_channel
     
     def _create_inverted_residual_block(self, inp, oup, stride, expand_ratio):
         """
