@@ -11,7 +11,14 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix, classification_report
 import os
 import json
-import memtorch
+
+# Try to import memtorch, but don't fail if it's not available
+try:
+    import memtorch
+    MEMTORCH_AVAILABLE = True
+except ImportError:
+    MEMTORCH_AVAILABLE = False
+    print("MemTorch not available. Using simplified implementation.")
 
 
 class ModelEvaluator:
@@ -140,25 +147,6 @@ class ModelEvaluator:
             dict: Energy efficiency metrics.
         """
         # Check if model is memristive
-        if not hasattr(self.model, 'is_memristive') or not self.model.is_memristive:
-            print("Warning: Model is not memristive. Energy analysis may not be accurate.")
-        
-        # Get model output size (number of classes)
-        output_size = self.model.num_classes
-        
-        # Use memtorch's energy analysis if available
-        try:
-            # For memtorch models
-            energy_analysis = memtorch.utils.analyze_energy(self.model)
-            memristor_energy = energy_analysis['memristor_energy_nJ']
-            gpu_energy = energy_analysis['gpu_energy_nJ']
-            efficiency_ratio = energy_analysis['efficiency_ratio']
-        except (AttributeError, ImportError):
-            # Fallback to simplified calculation
-            # Estimate energy consumption (nJ)
-            memristor_energy = self._estimate_memristor_energy(input_size, output_size, batch_size)
-            gpu_energy = self._estimate_gpu_energy(input_size, output_size, batch_size)
-            efficiency_ratio = gpu_energy / memristor_energy
         
         print(f"Energy Efficiency Analysis:")
         print(f"  Memristor Energy: {memristor_energy:.2f} nJ")
@@ -196,15 +184,20 @@ class ModelEvaluator:
         output_size = self.model.num_classes
         
         # Use memtorch's latency analysis if available
-        try:
-            # For memtorch models
-            latency_analysis = memtorch.utils.analyze_latency(self.model)
-            memristor_latency = latency_analysis['memristor_latency_ns']
-            gpu_latency = latency_analysis['gpu_latency_ns']
-            latency_reduction = latency_analysis['latency_reduction']
-        except (AttributeError, ImportError):
-            # Fallback to simplified calculation
-            # Estimate latency (ns)
+        if MEMTORCH_AVAILABLE:
+            try:
+                # For memtorch models
+                latency_analysis = memtorch.utils.analyze_latency(self.model)
+                memristor_latency = latency_analysis['memristor_latency_ns']
+                gpu_latency = latency_analysis['gpu_latency_ns']
+                latency_reduction = latency_analysis['latency_reduction']
+            except (AttributeError, ImportError):
+                # Fallback to simplified calculation
+                memristor_latency = self._estimate_memristor_latency(input_size, output_size, batch_size, parallel_arrays)
+                gpu_latency = self._estimate_gpu_latency(input_size, output_size, batch_size)
+                latency_reduction = gpu_latency / memristor_latency
+        else:
+            # Use simplified calculation
             memristor_latency = self._estimate_memristor_latency(input_size, output_size, batch_size, parallel_arrays)
             gpu_latency = self._estimate_gpu_latency(input_size, output_size, batch_size)
             latency_reduction = gpu_latency / memristor_latency

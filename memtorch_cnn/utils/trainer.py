@@ -12,7 +12,14 @@ from tqdm import tqdm
 import os
 import json
 import matplotlib.pyplot as plt
-import memtorch
+
+# Try to import memtorch, but don't fail if it's not available
+try:
+    import memtorch
+    MEMTORCH_AVAILABLE = True
+except ImportError:
+    MEMTORCH_AVAILABLE = False
+    print("MemTorch not available. Using simplified implementation.")
 
 class HybridTrainer:
     """
