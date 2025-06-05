@@ -76,6 +76,15 @@ def main():
     print("\nAnalyzing latency...")
     latency_metrics = evaluator.analyze_latency()
     
+    # Print summary metrics
+    print("\n" + "="*50)
+    print("Evaluation Summary")
+    print("="*50)
+    print(f"Test Accuracy: {metrics['accuracy']:.2f}%")
+    print(f"Energy Efficiency: {energy_metrics['efficiency_ratio']:.2f}x")
+    print(f"Latency Reduction: {latency_metrics['latency_reduction']:.2f}x")
+    print(f"Results saved to: {args.results_dir}")
+    
     print("\nEvaluation complete!")
 
 if __name__ == "__main__":
