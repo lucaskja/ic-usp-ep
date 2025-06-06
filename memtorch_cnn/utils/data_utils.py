@@ -51,26 +51,34 @@ def get_leaf_disease_dataloaders(data_dir, batch_size=32, enhanced_augmentation=
     
     # Check if dataset is already split
     train_dir = os.path.join(data_dir, 'train')
+    val_dir = os.path.join(data_dir, 'val')
     test_dir = os.path.join(data_dir, 'test')
     
     if os.path.exists(train_dir) and os.path.exists(test_dir):
         # Dataset is already split
+        print(f"Using pre-split dataset from {data_dir}")
         train_dataset = datasets.ImageFolder(root=train_dir, transform=train_transform)
+        
+        # Check if validation directory exists
+        if os.path.exists(val_dir):
+            val_dataset = datasets.ImageFolder(root=val_dir, transform=val_transform)
+        else:
+            # Split train into train and validation
+            train_size = int((1 - val_split) * len(train_dataset))
+            val_size = len(train_dataset) - train_size
+            train_dataset, val_dataset = random_split(
+                train_dataset, 
+                [train_size, val_size],
+                generator=torch.Generator().manual_seed(42)
+            )
+            
+            # Update transform for validation dataset
+            val_dataset.dataset.transform = val_transform
+        
         test_dataset = datasets.ImageFolder(root=test_dir, transform=val_transform)
-        
-        # Split train into train and validation
-        train_size = int((1 - val_split) * len(train_dataset))
-        val_size = len(train_dataset) - train_size
-        train_dataset, val_dataset = random_split(
-            train_dataset, 
-            [train_size, val_size],
-            generator=torch.Generator().manual_seed(42)
-        )
-        
-        # Update transform for validation dataset
-        val_dataset.dataset.transform = val_transform
     else:
         # Load the entire dataset
+        print(f"Creating train/val/test split from {data_dir}")
         full_dataset = datasets.ImageFolder(root=data_dir, transform=val_transform)
         
         # Split into train, validation, and test

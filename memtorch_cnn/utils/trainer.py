@@ -141,7 +141,7 @@ class HybridTrainer:
         
         # Save training history
         with open(os.path.join(self.checkpoint_dir, 'ex_situ_history.json'), 'w') as f:
-            json.dump({k: [float(v) for v in vals] for k, vals in history.items()}, f)
+            json.dump({k: [float(v) for v in vals] if isinstance(vals, (list, tuple)) else float(vals) for k, vals in history.items()}, f)
         
         # Plot training history
         self._plot_training_history(history, 'ex_situ')

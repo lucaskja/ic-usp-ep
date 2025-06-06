@@ -40,8 +40,7 @@ def main():
     print("Loading dataset...")
     _, _, test_loader = get_leaf_disease_dataloaders(
         data_dir=args.data_dir,
-        batch_size=args.batch_size,
-        num_workers=4
+        batch_size=args.batch_size
     )
     
     class_names = get_class_names(args.data_dir)
