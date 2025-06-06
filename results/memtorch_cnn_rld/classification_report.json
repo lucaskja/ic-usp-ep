@@ -1,0 +1,39 @@
+{
+    "Bacterialblight": {
+        "precision": 0.9937106918238994,
+        "recall": 0.9937106918238994,
+        "f1-score": 0.9937106918238994,
+        "support": 159.0
+    },
+    "Blast": {
+        "precision": 0.9862068965517241,
+        "recall": 0.9930555555555556,
+        "f1-score": 0.9896193771626297,
+        "support": 144.0
+    },
+    "Brownspot": {
+        "precision": 0.99375,
+        "recall": 0.99375,
+        "f1-score": 0.99375,
+        "support": 160.0
+    },
+    "Tungro": {
+        "precision": 0.9923076923076923,
+        "recall": 0.9847328244274809,
+        "f1-score": 0.9885057471264368,
+        "support": 131.0
+    },
+    "accuracy": 0.9915824915824916,
+    "macro avg": {
+        "precision": 0.991493820170829,
+        "recall": 0.9913122679517339,
+        "f1-score": 0.9913964540282414,
+        "support": 594.0
+    },
+    "weighted avg": {
+        "precision": 0.9915927622824174,
+        "recall": 0.9915824915824916,
+        "f1-score": 0.9915815541834713,
+        "support": 594.0
+    }
+}

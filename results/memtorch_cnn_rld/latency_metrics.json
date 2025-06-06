@@ -1,0 +1,6 @@
+{
+    "memristor_latency_ns": 6690133.333333333,
+    "gpu_latency_ns": 11021.119999999999,
+    "latency_reduction": 0.0016473692602040815,
+    "parallel_arrays": 3
+}
