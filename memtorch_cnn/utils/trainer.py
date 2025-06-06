@@ -19,7 +19,7 @@ import traceback
 try:
     import memtorch
     MEMTORCH_AVAILABLE = True
-    print(f"MemTorch successfully imported in trainer.py from {memtorch.__file__}")
+    # Debug print removed
 except ImportError as e:
     MEMTORCH_AVAILABLE = False
     error_info = traceback.format_exc()

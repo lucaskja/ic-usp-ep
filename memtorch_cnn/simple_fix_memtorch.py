@@ -19,7 +19,7 @@ def main():
     with open(bindings_path, "w") as f:
         f.write("""
 # Dummy memtorch_bindings module to prevent import errors
-print("Using dummy memtorch_bindings module")
+# Debug print removed
 
 def crossbar_operation(*args, **kwargs):
     raise NotImplementedError("This is a dummy implementation. Use the simplified MemTorch implementation instead.")

@@ -8,9 +8,9 @@ import traceback
 try:
     # Try to import the full MemTorch implementation
     import memtorch
-    print(f"MemTorch successfully imported from {memtorch.__file__}")
+    # Debug print removed
     from .memtorch_cnn import MemTorchCNN, InvertedResidualWithSkip
-    print("Using full MemTorch implementation")
+    # Debug print removed
 except ImportError as e:
     # Fall back to the simplified implementation
     error_info = traceback.format_exc()
