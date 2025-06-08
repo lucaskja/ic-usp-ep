@@ -230,8 +230,6 @@ class MemTorchCNN(nn.Module):
                     ADC_resolution=adc_resolution,
                     DAC_resolution=dac_resolution
                 ).to(device)
-                    DAC_resolution=dac_resolution
-                ).to(device)
         
         # Convert classifier
         for i, layer in enumerate(self.classifier):
