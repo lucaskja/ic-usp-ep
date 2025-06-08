@@ -162,8 +162,8 @@ class ModelEvaluator:
         # Use memtorch's energy analysis if available
         if MEMTORCH_AVAILABLE:
             try:
-                # For memtorch models
-                energy_analysis = memtorch.utils.analyze_energy(self.model)
+                # For memtorch models - using correct API call
+                energy_analysis = memtorch.utils.analyze_energy_usage(self.model)
                 memristor_energy = energy_analysis['memristor_energy_nJ']
                 gpu_energy = energy_analysis['gpu_energy_nJ']
                 efficiency_ratio = energy_analysis['efficiency_ratio']
@@ -216,8 +216,8 @@ class ModelEvaluator:
         # Use memtorch's latency analysis if available
         if MEMTORCH_AVAILABLE:
             try:
-                # For memtorch models
-                latency_analysis = memtorch.utils.analyze_latency(self.model)
+                # For memtorch models - using correct API call
+                latency_analysis = memtorch.utils.analyze_inference_time(self.model)
                 memristor_latency = latency_analysis['memristor_latency_ns']
                 gpu_latency = latency_analysis['gpu_latency_ns']
                 latency_reduction = latency_analysis['latency_reduction']

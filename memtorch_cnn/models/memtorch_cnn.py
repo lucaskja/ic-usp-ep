@@ -230,6 +230,8 @@ class MemTorchCNN(nn.Module):
                     ADC_resolution=adc_resolution,
                     DAC_resolution=dac_resolution
                 ).to(device)
+                    DAC_resolution=dac_resolution
+                ).to(device)
         
         # Convert classifier
         for i, layer in enumerate(self.classifier):
@@ -277,10 +279,12 @@ class MemTorchCNN(nn.Module):
         for name, module in self.named_modules():
             if isinstance(module, (memtorch.mn.Conv2d, memtorch.mn.Linear)):
                 print(f"Applying non-idealities to {name}")
-                module.apply_non_idealities(
-                    non_idealities=non_idealities,
-                    params=params
-                )
+                # Correct API call
+                for non_ideality in non_idealities:
+                    module.apply_nonideality(
+                        non_ideality=non_ideality,
+                        **params
+                    )
         
         print("Non-idealities applied.")
     
