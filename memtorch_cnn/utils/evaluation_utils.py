@@ -162,11 +162,10 @@ class ModelEvaluator:
         # Use memtorch's energy analysis if available
         if MEMTORCH_AVAILABLE:
             try:
-                # For memtorch models - using correct API call
-                energy_analysis = memtorch.utils.analyze_energy_usage(self.model)
-                memristor_energy = energy_analysis['memristor_energy_nJ']
-                gpu_energy = energy_analysis['gpu_energy_nJ']
-                efficiency_ratio = energy_analysis['efficiency_ratio']
+                # For memtorch models - using our estimation since memtorch doesn't have a direct energy analysis function
+                memristor_energy = self._estimate_memristor_energy(input_size, output_size, batch_size)
+                gpu_energy = self._estimate_gpu_energy(input_size, output_size, batch_size)
+                efficiency_ratio = gpu_energy / memristor_energy
             except (AttributeError, ImportError):
                 # Fallback to simplified calculation
                 memristor_energy = self._estimate_memristor_energy(input_size, output_size, batch_size)
@@ -216,11 +215,10 @@ class ModelEvaluator:
         # Use memtorch's latency analysis if available
         if MEMTORCH_AVAILABLE:
             try:
-                # For memtorch models - using correct API call
-                latency_analysis = memtorch.utils.analyze_inference_time(self.model)
-                memristor_latency = latency_analysis['memristor_latency_ns']
-                gpu_latency = latency_analysis['gpu_latency_ns']
-                latency_reduction = latency_analysis['latency_reduction']
+                # For memtorch models - using our estimation since memtorch doesn't have a direct latency analysis function
+                memristor_latency = self._estimate_memristor_latency(input_size, output_size, batch_size, parallel_arrays)
+                gpu_latency = self._estimate_gpu_latency(input_size, output_size, batch_size)
+                latency_reduction = gpu_latency / memristor_latency
             except (AttributeError, ImportError):
                 # Fallback to simplified calculation
                 memristor_latency = self._estimate_memristor_latency(input_size, output_size, batch_size, parallel_arrays)
