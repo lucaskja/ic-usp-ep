@@ -1,49 +1,49 @@
-# MobileNetV2 Framework Comparison
+# Comparação de Frameworks MobileNetV2
 
-This directory contains code and results for comparing MobileNetV2 implementations between PyTorch and TensorFlow.
+Este diretório contém código e resultados para comparar implementações MobileNetV2 entre PyTorch e TensorFlow.
 
-## Environment Setup
+## Configuração do Ambiente
 
 - Python 3.12
 - TensorFlow 2.19.0
 - PyTorch 2.7.0
 
-## Files
+## Arquivos
 
-- `compare_models.py`: Script to directly compare PyTorch and TensorFlow MobileNetV2 implementations
-- `detailed_comparison.md`: Comprehensive analysis of the comparison results
+- `compare_models.py`: Script para comparar diretamente implementações MobileNetV2 PyTorch e TensorFlow
+- `detailed_comparison.md`: Análise abrangente dos resultados da comparação
 
-## Key Findings
+## Principais Descobertas
 
-1. **Parameter Count**:
-   - PyTorch MobileNetV2: 3,504,872 parameters
-   - TensorFlow MobileNetV2: 3,538,984 parameters
-   - Difference: 34,112 parameters (0.96%)
+1. **Contagem de Parâmetros**:
+   - PyTorch MobileNetV2: 3.504.872 parâmetros
+   - TensorFlow MobileNetV2: 3.538.984 parâmetros
+   - Diferença: 34.112 parâmetros (0,96%)
 
-2. **Model Size**:
-   - Both implementations: 13.50 MB
+2. **Tamanho do Modelo**:
+   - Ambas implementações: 13,50 MB
 
-3. **Layer Distribution**:
+3. **Distribuição de Camadas**:
    - PyTorch: 52 Conv2d, 52 BatchNorm2d, 1 Linear
    - TensorFlow: 35 Conv2D, 17 DepthwiseConv2D, 52 BatchNormalization, 1 Dense
 
-4. **Inference Performance**:
-   - PyTorch: 49.62 ms per inference
-   - TensorFlow: 59.58 ms per inference
-   - PyTorch is approximately 20% faster on this hardware
+4. **Performance de Inferência**:
+   - PyTorch: 49,62 ms por inferência
+   - TensorFlow: 59,58 ms por inferência
+   - PyTorch é aproximadamente 20% mais rápido neste hardware
 
-## Running the Comparison
+## Executando a Comparação
 
 ```bash
-# Activate the virtual environment
+# Ative o ambiente virtual
 source tf_venv/bin/activate
 
-# Run the comparison script
+# Execute o script de comparação
 python compare_models.py
 ```
 
-## Conclusion
+## Conclusão
 
-The PyTorch and TensorFlow implementations of MobileNetV2 are functionally equivalent with minor differences in parameter count (0.96%) and implementation details. The main architectural difference is in how batch normalization is implemented and how depthwise convolutions are handled.
+As implementações PyTorch e TensorFlow do MobileNetV2 são funcionalmente equivalentes com pequenas diferenças na contagem de parâmetros (0,96%) e detalhes de implementação. A principal diferença arquitetural está em como a normalização em lote é implementada e como as convoluções depthwise são tratadas.
 
-For research purposes, both implementations can be considered equivalent, with PyTorch showing a slight performance advantage in inference speed on this particular hardware.
+Para fins de pesquisa, ambas as implementações podem ser consideradas equivalentes, com PyTorch mostrando uma ligeira vantagem de performance na velocidade de inferência neste hardware específico.

@@ -1,33 +1,33 @@
-# 📘 MemTorch API Documentation
+# 📘 Documentação da API MemTorch
 
-**Version**: 1.1.6
-**Source**: [MemTorch Documentation](https://memtorch.readthedocs.io/en/latest/)
-**Overview**: MemTorch is a simulation framework for memristive deep learning systems, integrating seamlessly with PyTorch. It enables modeling of memristive devices, their non-idealities, and mapping of neural network components to memristive hardware.
-
----
-
-## 📂 Module Structure
-
-* [`memtorch.bh`](#memtorchbh-behavioral-modeling)
-* [`memtorch.map`](#memtorchmap-mapping-and-scaling)
-* [`memtorch.mn`](#memtorchmn-memristive-neural-network-modules)
-* [📘 Tutorials and Examples](#-tutorials-and-examples)
+**Versão**: 1.1.6
+**Fonte**: [Documentação MemTorch](https://memtorch.readthedocs.io/en/latest/)
+**Visão Geral**: MemTorch é um framework de simulação para sistemas de aprendizado profundo memristivos, integrando-se perfeitamente com PyTorch. Permite modelagem de dispositivos memristivos, suas não-idealidades, e mapeamento de componentes de redes neurais para hardware memristivo.
 
 ---
 
-## `memtorch.bh`: Behavioral Modeling
+## 📂 Estrutura de Módulos
 
-This module provides tools to simulate the behavior of memristive devices and crossbar arrays.
+* [`memtorch.bh`](#memtorchbh-modelagem-comportamental)
+* [`memtorch.map`](#memtorchmap-mapeamento-e-escalonamento)
+* [`memtorch.mn`](#memtorchmn-módulos-de-rede-neural-memristiva)
+* [📘 Tutoriais e Exemplos](#-tutoriais-e-exemplos)
+
+---
+
+## `memtorch.bh`: Modelagem Comportamental
+
+Este módulo fornece ferramentas para simular o comportamento de dispositivos memristivos e arrays crossbar.
 
 ### `memtorch.bh.memristor`
 
-Encapsulates various memristor models:
+Encapsula vários modelos de memristor:
 
-* **LinearIonDrift**: Models linear ion drift behavior.
-* **VTEAM**: Voltage Threshold Adaptive Memristor model.
-* **Data\_Driven**: Data-driven model based on empirical data.
+* **LinearIonDrift**: Modela comportamento de deriva iônica linear.
+* **VTEAM**: Modelo de Memristor Adaptativo de Limiar de Tensão.
+* **Data\_Driven**: Modelo baseado em dados empíricos.
 
-**Example**:
+**Exemplo**:
 
 ```python
 from memtorch.bh.memristor import VTEAM
@@ -37,14 +37,14 @@ memristor = VTEAM(r_on=100, r_off=16000)
 
 ### `memtorch.bh.nonideality`
 
-Models non-ideal behaviors such as:
+Modela comportamentos não-ideais como:
 
-* Finite conductance states
-* Device faults
-* Non-linear I/V characteristics
-* Endurance and retention effects
+* Estados de condutância finitos
+* Falhas de dispositivo
+* Características I/V não-lineares
+* Efeitos de resistência e retenção
 
-**Example**:
+**Exemplo**:
 
 ```python
 from memtorch.bh.nonideality import NonIdeality
@@ -55,13 +55,13 @@ non_ideal.apply_nonidealities(model)
 
 ### `memtorch.bh.crossbar`
 
-Simulates crossbar architectures.
+Simula arquiteturas crossbar.
 
 #### `Crossbar`
 
-Models memristor crossbars and manages modular crossbar tiles.
+Modela crossbars memristivos e gerencia tiles crossbar modulares.
 
-**Example**:
+**Exemplo**:
 
 ```python
 import torch
@@ -76,23 +76,23 @@ crossbar = Crossbar(memristor_model=VTEAM,
 
 #### `Program`
 
-Provides routines to program the conductance of devices within a crossbar.
+Fornece rotinas para programar a condutância de dispositivos dentro de um crossbar.
 
 #### `Tile`
 
-Facilitates the creation of modular crossbar tiles to represent large-scale networks.
+Facilita a criação de tiles crossbar modulares para representar redes de grande escala.
 
 ---
 
-## `memtorch.map`: Mapping and Scaling
+## `memtorch.map`: Mapeamento e Escalonamento
 
-Handles the translation of neural network parameters and inputs to memristive hardware equivalents.
+Lida com a tradução de parâmetros de redes neurais e entradas para equivalentes de hardware memristivo.
 
 ### `memtorch.map.Input`
 
-Encodes input values as bit-line voltages.
+Codifica valores de entrada como tensões de bit-line.
 
-**Example**:
+**Exemplo**:
 
 ```python
 from memtorch.map.Input import naive_scale
@@ -102,9 +102,9 @@ scaled_input = naive_scale(module, input_tensor)
 
 ### `memtorch.map.Parameter`
 
-Maps neural network weights to device conductance values.
+Mapeia pesos de redes neurais para valores de condutância de dispositivos.
 
-**Example**:
+**Exemplo**:
 
 ```python
 from memtorch.map.Parameter import naive_map
@@ -114,9 +114,9 @@ mapped_params = naive_map(layer)
 
 ### `memtorch.map.Module`
 
-Determines relationships between readout currents of memristive crossbars and desired outputs.
+Determina relações entre correntes de leitura de crossbars memristivos e saídas desejadas.
 
-**Example**:
+**Exemplo**:
 
 ```python
 from memtorch.map.Module import naive_tune
@@ -126,15 +126,15 @@ naive_tune(module, input_shape=(1, 28, 28))
 
 ---
 
-## `memtorch.mn`: Memristive Neural Network Modules
+## `memtorch.mn`: Módulos de Rede Neural Memristiva
 
-Offers memristive equivalents of PyTorch neural network layers.
+Oferece equivalentes memristivos de camadas de redes neurais PyTorch.
 
 ### `memtorch.mn.Module`
 
-Includes the `patch_model` function to convert standard PyTorch models into memristive versions.
+Inclui a função `patch_model` para converter modelos PyTorch padrão em versões memristivas.
 
-**Example**:
+**Exemplo**:
 
 ```python
 import copy
@@ -152,9 +152,9 @@ patched_model = patch_model(copy.deepcopy(model),
                             scaling_routine=naive_scale)
 ```
 
-### Layer Implementations
+### Implementações de Camadas
 
-Provides memristive versions of layers:
+Fornece versões memristivas de camadas:
 
 * `Linear`
 * `Conv1d`
@@ -162,7 +162,7 @@ Provides memristive versions of layers:
 * `Conv3d`
 * `RNN`
 
-**Example**:
+**Exemplo**:
 
 ```python
 from memtorch.mn import Linear
@@ -175,43 +175,43 @@ memristive_linear = Linear(torch.nn.Linear(10, 5),
 
 ---
 
-## 📘 Tutorials and Examples
+## 📘 Tutoriais e Exemplos
 
-MemTorch offers a suite of interactive tutorials in Jupyter Notebook format to help users get started and explore advanced features:
+MemTorch oferece uma suíte de tutoriais interativos em formato Jupyter Notebook para ajudar usuários a começar e explorar recursos avançados:
 
-### Introductory Tutorial
+### Tutorial Introdutório
 
-A starting point for new users to understand the basics of MemTorch.
+Um ponto de partida para novos usuários entenderem os básicos do MemTorch.
 
-**Link**: [Open in Colab](https://colab.research.google.com/github/coreylammie/MemTorch/blob/master/tutorials/Introductory_Tutorial.ipynb)
+**Link**: [Abrir no Colab](https://colab.research.google.com/github/coreylammie/MemTorch/blob/master/tutorials/Introductory_Tutorial.ipynb)
 
-### Exemplar Simulations
+### Simulações Exemplares
 
-Demonstrates various simulations as presented in the original MemTorch paper.
+Demonstra várias simulações apresentadas no artigo original do MemTorch.
 
-**Link**: [Open in Colab](https://colab.research.google.com/github/coreylammie/MemTorch/blob/master/tutorials/Exemplar_Simulations.ipynb)
+**Link**: [Abrir no Colab](https://colab.research.google.com/github/coreylammie/MemTorch/blob/master/tutorials/Exemplar_Simulations.ipynb)
 
-### Case Study (Legacy)
+### Estudo de Caso (Legado)
 
-An application of MemTorch in epileptic seizure detection.
+Uma aplicação do MemTorch na detecção de convulsões epilépticas.
 
-**Link**: [Open in Colab](https://colab.research.google.com/github/coreylammie/MemTorch/blob/master/tutorials/Case_Study.ipynb)
+**Link**: [Abrir no Colab](https://colab.research.google.com/github/coreylammie/MemTorch/blob/master/tutorials/Case_Study.ipynb)
 
-### Novel Simulations (Legacy)
+### Simulações Novas (Legado)
 
-Explores simulations using the CIFAR-10 dataset.
+Explora simulações usando o dataset CIFAR-10.
 
-**Link**: [Open in Colab](https://colab.research.google.com/github/coreylammie/MemTorch/blob/master/tutorials/Novel_Simulations.ipynb)
+**Link**: [Abrir no Colab](https://colab.research.google.com/github/coreylammie/MemTorch/blob/master/tutorials/Novel_Simulations.ipynb)
 
-These tutorials are accessible via [Google Colab](https://memtorch.readthedocs.io/en/latest/tutorials.html), allowing users to run them without local setup.
+Estes tutoriais são acessíveis via [Google Colab](https://memtorch.readthedocs.io/en/latest/tutorials.html), permitindo aos usuários executá-los sem configuração local.
 
 ---
 
-## 🧠 Academic Reference
+## 🧠 Referência Acadêmica
 
-For an in-depth understanding of the framework and its applications, refer to the original paper:
+Para um entendimento aprofundado do framework e suas aplicações, consulte o artigo original:
 
-* **Title**: *MemTorch: An Open-source Simulation Framework for Memristive Deep Learning Systems*
-* **Authors**: Corey Lammie, Wei Xiang, Bernabé Linares-Barranco, Mostafa Rahimi Azghadi
-* **Published**: April 23, 2020
-* **Abstract**: Discusses the potential of memristive devices in accelerating deep learning systems and introduces MemTorch as a tool for simulating such systems, accounting for device non-idealities and peripheral circuitry.
+* **Título**: *MemTorch: Um Framework de Simulação de Código Aberto para Sistemas de Aprendizado Profundo Memristivos*
+* **Autores**: Corey Lammie, Wei Xiang, Bernabé Linares-Barranco, Mostafa Rahimi Azghadi
+* **Publicado**: 23 de Abril de 2020
+* **Resumo**: Discute o potencial de dispositivos memristivos na aceleração de sistemas de aprendizado profundo e introduz MemTorch como uma ferramenta para simular tais sistemas, considerando não-idealidades de dispositivos e circuitos periféricos.

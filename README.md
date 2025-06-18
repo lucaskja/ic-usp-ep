@@ -1,233 +1,195 @@
-# MobileNetV2 Improvements for Leaf Disease Classification
+# Melhorias do MobileNetV2 para Classificação de Doenças Foliares
 
-This project implements and evaluates several improvements to the MobileNetV2 architecture for leaf disease classification tasks. The improvements are implemented in stages, allowing for incremental testing and evaluation.
+Este projeto implementa e avalia várias melhorias na arquitetura MobileNetV2 para tarefas de classificação de doenças foliares. As melhorias são implementadas em estágios, permitindo testes e avaliações incrementais.
 
-## 🔄 Recent Updates
+## 🔄 Atualizações Recentes
 
-**[2025-05-28]** Added MemTorch-based CNN implementation:
-- Implemented a complete CNN using MemTorch for memristor device modeling
-- Added hybrid training approach with ex-situ and in-situ phases
-- Integrated hardware-aware training with memristor constraints
-- Included energy efficiency and latency analysis tools
-- Created comprehensive documentation and tests
+**[2025-05-28]** Adicionada implementação CNN baseada em MemTorch:
+- Implementada uma CNN completa usando MemTorch para modelagem de dispositivos memristores
+- Adicionada abordagem de treinamento híbrido com fases ex-situ e in-situ
+- Integrado treinamento consciente de hardware com restrições de memristores
+- Incluídas ferramentas de análise de eficiência energética e latência
+- Criada documentação abrangente e testes
 
-**[2025-04-27]** Reduced model size by using width_mult=0.75:
-- Decreased model size by ~38.5% (from 8.7MB to 5.3MB)
-- Added width_mult parameter to all model variants
-- Updated model configurations to use reduced size by default
-- Added tests to verify size reduction
+**[2025-04-27]** Reduzido tamanho do modelo usando width_mult=0.75:
+- Diminuído tamanho do modelo em ~38.5% (de 8.7MB para 5.3MB)
+- Adicionado parâmetro width_mult a todas as variantes do modelo
+- Atualizadas configurações do modelo para usar tamanho reduzido por padrão
+- Adicionados testes para verificar redução de tamanho
 
-**[2025-04-27]** Fixed implementation of Triplet Attention and CNSN modules:
-- Corrected Triplet Attention implementation with proper tensor rotations and Z-pooling
-- Fixed CNSN module with proper CrossNorm statistics exchange and SelfNorm recalibration
-- Added comprehensive test suite for both modules
-- Improved integration with MobileNetV2 architecture
+**[2025-04-27]** Corrigida implementação dos módulos Triplet Attention e CNSN:
+- Corrigida implementação do Triplet Attention com rotações de tensor adequadas e Z-pooling
+- Corrigido módulo CNSN com troca adequada de estatísticas CrossNorm e recalibração SelfNorm
+- Adicionada suíte de testes abrangente para ambos os módulos
+- Melhorada integração com arquitetura MobileNetV2
 
-## Project Structure
+## Estrutura do Projeto
 
-The project has been reorganized with a unified structure:
+O projeto foi reorganizado com uma estrutura unificada:
 
 ```
 project_root/
-├── mobilenetv2_improvements/  # MobileNetV2 improvements implementation
-│   ├── base_mobilenetv2/      # Base MobileNetV2 model definition
-│   │   └── models/            # Model architecture implementation
-│   ├── stage1_mish/           # MobileNetV2 with Mish activation
-│   │   └── models/            # Model architecture implementation
-│   ├── stage2_triplet/        # MobileNetV2 with Mish and Triplet Attention
-│   │   └── models/            # Model architecture implementation
-│   ├── stage3_cnsn/           # MobileNetV2 with Mish, Triplet Attention, and CNSN
-│   │   └── models/            # Model architecture implementation
-│   ├── configs/               # Unified configuration files
-│   └── utils/                 # Unified utility functions
-├── memristor_cnn/             # Custom memristor-based CNN implementation
-│   ├── models/                # Memristor model architecture
-│   └── utils/                 # Memristor utility functions
-├── memtorch_cnn/              # MemTorch-based CNN implementation
-│   ├── models/                # MemTorch model architecture
-│   ├── utils/                 # MemTorch utility functions
-│   └── tests/                 # Tests for MemTorch implementation
-├── datasets/                  # Dataset storage (not tracked by git)
-├── checkpoints/               # Model checkpoints (organized by model type)
-├── experiments/               # Experiment results and logs
-└── logs/                      # Training and evaluation logs
-│   └── model_configs.py  # Configuration for all model variants
-├── utils/                # Unified utility functions
-│   ├── data_utils.py     # Standard data loading utilities
-│   ├── enhanced_data_utils.py # Enhanced data augmentation
-│   ├── evaluator.py      # Unified model evaluation
-│   ├── model_factory.py  # Factory pattern for model creation
-│   ├── model_utils.py    # Model utility functions
-│   ├── training_utils.py # Training utility functions
-│   └── visualize_transforms.py # Visualization tools for data transforms
-├── datasets/             # Dataset storage (not tracked by git)
-├── checkpoints/          # Model checkpoints (organized by model type)
-├── experiments/          # Experiment results and logs
-├── logs/                 # Training and evaluation logs
-├── docs/                 # Documentation
-├── tests/                # Test cases
-├── train.py              # Unified training script for all models
-├── train_comparison.py   # Script to compare model variants with/without parameter reduction
-└── evaluate.py           # Unified evaluation script for all models
+├── mobilenetv2_improvements/  # Implementação de melhorias MobileNetV2
+│   ├── base_mobilenetv2/      # Definição do modelo MobileNetV2 base
+│   │   └── models/            # Implementação da arquitetura do modelo
+│   ├── stage1_mish/           # MobileNetV2 com ativação Mish
+│   │   └── models/            # Implementação da arquitetura do modelo
+│   ├── stage2_triplet/        # MobileNetV2 com Mish e Triplet Attention
+│   │   └── models/            # Implementação da arquitetura do modelo
+│   ├── stage3_cnsn/           # MobileNetV2 com Mish, Triplet Attention e CNSN
+│   │   └── models/            # Implementação da arquitetura do modelo
+│   ├── configs/               # Arquivos de configuração unificados
+│   └── utils/                 # Funções utilitárias unificadas
+├── memristor_cnn/             # Implementação CNN personalizada baseada em memristor
+│   ├── models/                # Arquitetura do modelo memristor
+│   └── utils/                 # Funções utilitárias memristor
+├── memtorch_cnn/              # Implementação CNN baseada em MemTorch
+│   ├── models/                # Arquitetura do modelo MemTorch
+│   ├── utils/                 # Funções utilitárias MemTorch
+│   └── tests/                 # Testes para implementação MemTorch
+├── datasets/                  # Armazenamento de datasets (não rastreado pelo git)
+├── checkpoints/               # Checkpoints do modelo (organizados por tipo de modelo)
+├── experiments/               # Resultados e logs de experimentos
+└── logs/                      # Logs de treinamento e avaliação
 ```
 
-## Running Model Comparison
+## Executando Comparação de Modelos
 
-To compare all model variants with and without parameter reduction:
+Para comparar todas as variantes do modelo com e sem redução de parâmetros:
 
 ```bash
-# Basic comparison
+# Comparação básica
 python train_comparison.py --data_dir datasets/leaf_disease
 
-# With enhanced data augmentation
+# Com aumento de dados aprimorado
 python train_comparison.py --data_dir datasets/leaf_disease --enhanced_augmentation
 
-# With GPU acceleration
+# Com aceleração GPU
 python train_comparison.py --data_dir datasets/leaf_disease --device cuda
 ```
 
-This will train and evaluate the following models:
-1. Base MobileNetV2 without parameter reduction (width_mult=1.0)
-2. Base MobileNetV2 with parameter reduction (width_mult=0.75)
-3. MobileNetV2 with Mish and parameter reduction (width_mult=0.75)
-4. MobileNetV2 with Mish, Triplet Attention and parameter reduction (width_mult=0.75)
-5. MobileNetV2 with Mish, Triplet Attention, CNSN and parameter reduction (width_mult=0.75)
+Isso treinará e avaliará os seguintes modelos:
+1. MobileNetV2 base sem redução de parâmetros (width_mult=1.0)
+2. MobileNetV2 base com redução de parâmetros (width_mult=0.75)
+3. MobileNetV2 com Mish e redução de parâmetros (width_mult=0.75)
+4. MobileNetV2 com Mish, Triplet Attention e redução de parâmetros (width_mult=0.75)
+5. MobileNetV2 com Mish, Triplet Attention, CNSN e redução de parâmetros (width_mult=0.75)
 
-Results will be saved to `experiments/comparison/model_comparison_results.csv` with detailed metrics.
+Os resultados serão salvos em `experiments/comparison/model_comparison_results.csv` com métricas detalhadas.
 
-## Model Improvements
+## Implementações de Modelos
 
-## Model Implementations
+### 1. MobileNetV2 Base
 
-### 1. Base MobileNetV2
+O modelo fundamental com:
+- Estrutura residual invertida
+- Convoluções separáveis em profundidade
+- Gargalos lineares
+- Função de ativação ReLU6
+- Multiplicador de largura opcional (padrão: 0.75) para reduzir tamanho do modelo
 
-The foundation model with:
-- Inverted residual structure
-- Depthwise separable convolutions
-- Linear bottlenecks
-- ReLU6 activation function
-- Optional width multiplier (default: 0.75) to reduce model size
+### 2. MobileNetV2 com Ativação Mish (Estágio 1)
 
-### 2. MobileNetV2 with Mish Activation (Stage 1)
+Substitui ReLU6 pela função de ativação Mish para melhorar características não-lineares:
+- Função de ativação mais suave com fórmula: `f(x) = x * tanh(softplus(x))`
+- Melhor propagação de gradiente sem problemas de gradiente desaparecendo
+- Sem truncamento de limite superior (diferente do limite de 6 do ReLU6)
+- Permite saídas negativas, preservando informações negativas importantes
 
-Replaces ReLU6 with Mish activation function to enhance nonlinear characteristics:
-- Smoother activation function with formula: `f(x) = x * tanh(softplus(x))`
-- Better gradient propagation with no vanishing gradient issues
-- No upper bound truncation (unlike ReLU6's limit at 6)
-- Allows negative outputs, preserving important negative information
+### 3. MobileNetV2 com Mish e Triplet Attention (Estágio 2)
 
-### 3. MobileNetV2 with Mish and Triplet Attention (Stage 2)
+Adiciona uma estrutura de atenção de três ramos para capturar interações entre dimensões:
+- Três ramos paralelos focando em diferentes interações dimensionais:
+  - Ramo 1: Interação Canal-Altura
+  - Ramo 2: Interação Canal-Largura
+  - Ramo 3: Atenção espacial padrão
+- Operação Z-Pool combina max-pooling e average-pooling
+- Sem redução de canal, preservando fluxo completo de informações
+- Design eficiente em parâmetros com sobrecarga computacional mínima
 
-Adds a three-branch attention structure for capturing cross-dimension interactions:
-- Three parallel branches focusing on different dimensional interactions:
-  - Branch 1: Channel-Height interaction
-  - Branch 2: Channel-Width interaction
-  - Branch 3: Standard spatial attention
-- Z-Pool operation combines max-pooling and average-pooling
-- No channel reduction, preserving full information flow
-- Parameter-efficient design with minimal computational overhead
+### 4. MobileNetV2 com Mish, Triplet Attention e CNSN (Estágio 3)
 
-### 4. MobileNetV2 with Mish, Triplet Attention, and CNSN (Stage 3)
+Integra módulos CrossNorm e SelfNorm:
+- CrossNorm: Amplia distribuição de treinamento trocando estatísticas por canal
+  - Ativo apenas durante treinamento
+  - Cria representações de características diversas
+  - Múltiplos modos: 1-instância, 2-instâncias e crop
+- SelfNorm: Conecta lacuna de distribuição treino-teste usando mecanismo de atenção
+  - Ativo durante treinamento e teste
+  - Usa funções de atenção para recalibrar estatísticas
+  - Processa cada canal independentemente
 
-Integrates CrossNorm and SelfNorm modules:
-- CrossNorm: Enlarges training distribution by exchanging channel-wise statistics
-  - Only active during training
-  - Creates diverse feature representations
-  - Multiple modes: 1-instance, 2-instance, and crop
-- SelfNorm: Bridges train-test distribution gap using an attention mechanism
-  - Active during both training and testing
-  - Uses attention functions to recalibrate statistics
-  - Processes each channel independently
+### 5. Implementação CNN Baseada em Memristor
 
-### 5. Memristor-based CNN Implementation
+Implementação personalizada de CNN baseada em memristor:
+- Usa arrays crossbar de memristor simulados para computação
+- Implementa pares de condutância diferencial para representação de pesos
+- Inclui variação de dispositivo e simulação de deriva de estado
+- Fornece análise básica de eficiência energética e latência
 
-Custom implementation of memristor-based CNN:
-- Uses simulated memristor crossbar arrays for computation
-- Implements differential conductance pairs for weight representation
-- Includes device variation and state drift simulation
-- Provides basic energy efficiency and latency analysis
+### 6. Implementação CNN Baseada em MemTorch
 
-### 6. MemTorch-based CNN Implementation
+Implementação avançada usando framework MemTorch:
+- Modelagem precisa de dispositivo memristor com modelo LinearIonDrift
+- Treinamento consciente de hardware com restrições de memristor
+- Abordagem de treinamento híbrido:
+  - Treinamento ex-situ em hardware convencional
+  - Transferência de pesos para arrays memristor
+  - Ajuste fino in-situ com atualizações baseadas em limiar
+- Análise abrangente de eficiência energética e latência
+- Suporte integrado para variações de dispositivo e não-idealidades
 
-Advanced implementation using MemTorch framework:
-- Accurate memristor device modeling with LinearIonDrift model
-- Hardware-aware training with memristor constraints
-- Hybrid training approach:
-  - Ex-situ training on conventional hardware
-  - Weight transfer to memristor arrays
-  - In-situ fine-tuning with threshold-based updates
-- Comprehensive energy efficiency and latency analysis
-- Built-in support for device variations and non-idealities
-  - Branch 1: Channel-Height interaction
-  - Branch 2: Channel-Width interaction
-  - Branch 3: Standard spatial attention
-- Z-Pool operation combines max-pooling and average-pooling
-- No channel reduction, preserving full information flow
-- Parameter-efficient design with minimal computational overhead
+## Instruções de Configuração
 
-### 4. MobileNetV2 with Mish, Triplet Attention, and CNSN (Stage 3)
+### Configuração do Ambiente
 
-Integrates CrossNorm and SelfNorm modules:
-- CrossNorm: Enlarges training distribution by exchanging channel-wise statistics
-  - Only active during training
-  - Creates diverse feature representations
-  - Multiple modes: 1-instance, 2-instance, and crop
-- SelfNorm: Bridges train-test distribution gap using an attention mechanism
-  - Active during both training and testing
-  - Uses attention functions to recalibrate statistics
-  - Processes each channel independently
-
-## Setup Instructions
-
-### Environment Setup
-
-1. Clone the repository:
+1. Clone o repositório:
 ```bash
 git clone <repository-url>
 cd mobilenetv2_improvements
 ```
 
-2. Create and activate a virtual environment:
+2. Crie e ative um ambiente virtual:
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # No Windows: venv\Scripts\activate
 ```
 
-3. Install dependencies:
+3. Instale as dependências:
 ```bash
 pip install -r requirements.txt
 ```
 
-### GPU Acceleration Setup
+### Configuração de Aceleração GPU
 
-For faster training with NVIDIA GPUs:
+Para treinamento mais rápido com GPUs NVIDIA:
 
-1. Install CUDA Toolkit and cuDNN:
-   - Download and install [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) (11.8 or 12.1 recommended)
-   - Download and install [cuDNN](https://developer.nvidia.com/cudnn) (requires free NVIDIA account)
+1. Instale CUDA Toolkit e cuDNN:
+   - Baixe e instale [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) (11.8 ou 12.1 recomendado)
+   - Baixe e instale [cuDNN](https://developer.nvidia.com/cudnn) (requer conta gratuita NVIDIA)
 
-2. Install GPU-enabled PyTorch:
+2. Instale PyTorch habilitado para GPU:
 ```bash
-# Activate your virtual environment first
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Ative seu ambiente virtual primeiro
+source venv/bin/activate  # No Windows: venv\Scripts\activate
 
-# For CUDA 11.8
+# Para CUDA 11.8
 pip uninstall torch torchvision
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 
-# For CUDA 12.1
+# Para CUDA 12.1
 # pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 ```
 
-3. Verify GPU detection:
+3. Verifique detecção de GPU:
 ```bash
-python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}'); print(f'Device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"CPU\"}')"
+python -c "import torch; print(f'CUDA disponível: {torch.cuda.is_available()}'); print(f'Dispositivo: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"CPU\"}')"
 ```
 
-### Dataset Preparation
+### Preparação do Dataset
 
-1. Download a leaf disease dataset (e.g., Plant Village, PlantDoc, Rice Leaf Disease Dataset)
-2. Organize it according to the following structure:
+1. Baixe um dataset de doenças foliares (ex: Plant Village, PlantDoc, Rice Leaf Disease Dataset)
+2. Organize-o de acordo com a seguinte estrutura:
 ```
 datasets/
 └── leaf_disease/
@@ -242,121 +204,81 @@ datasets/
     └── ...
 ```
 
-The dataset will be automatically split into train, validation, and test sets when first used.
+O dataset será automaticamente dividido em conjuntos de treino, validação e teste quando usado pela primeira vez.
 
-## Running the Models
+## Executando os Modelos
 
-### Training
+### Treinamento
 
-All model variants are now trained using the unified `train.py` script:
+Todas as variantes do modelo são agora treinadas usando o script unificado `train.py`:
 
-#### Basic Training Commands
+#### Comandos Básicos de Treinamento
 
 ```bash
-# Base MobileNetV2
+# MobileNetV2 Base
 python train.py --data_dir datasets/leaf_disease --model_type base --epochs 60 --batch_size 32 --lr 0.001
 
-# MobileNetV2 with Mish
+# MobileNetV2 com Mish
 python train.py --data_dir datasets/leaf_disease --model_type mish --epochs 60 --batch_size 32 --lr 0.001
 
-# MobileNetV2 with Mish and Triplet Attention
+# MobileNetV2 com Mish e Triplet Attention
 python train.py --data_dir datasets/leaf_disease --model_type triplet --epochs 60 --batch_size 32 --lr 0.001
 
-# MobileNetV2 with Mish, Triplet Attention, and CNSN
+# MobileNetV2 com Mish, Triplet Attention e CNSN
 python train.py --data_dir datasets/leaf_disease --model_type cnsn --epochs 60 --batch_size 32 --lr 0.001
 ```
 
-#### Training with Enhanced Data Augmentation
+#### Treinamento com Aumento de Dados Aprimorado
 
 ```bash
-# Add --enhanced_augmentation flag to use enhanced data augmentation
+# Adicione flag --enhanced_augmentation para usar aumento de dados aprimorado
 python train.py --data_dir datasets/leaf_disease --model_type base --enhanced_augmentation --epochs 60 --batch_size 32 --lr 0.001
 ```
 
-#### GPU Training Commands
+#### Comandos de Treinamento GPU
 
 ```bash
-# Add --device cuda to use GPU acceleration
+# Adicione --device cuda para usar aceleração GPU
 python train.py --data_dir datasets/leaf_disease --model_type base --epochs 60 --batch_size 64 --lr 0.001 --device cuda
 ```
 
-#### Training All Models Sequentially
+### Avaliação
+
+Todas as variantes do modelo são avaliadas usando o script unificado `evaluate.py`:
 
 ```bash
-# Use --train_all flag to train all models in sequence (base -> mish -> triplet -> cnsn)
-python train.py --data_dir datasets/leaf_disease --train_all --epochs 60 --batch_size 32 --lr 0.001 --device cuda
-```
-
-### Evaluation
-
-All model variants are evaluated using the unified `evaluate.py` script:
-
-```bash
-# Base MobileNetV2
+# MobileNetV2 Base
 python evaluate.py --data_dir datasets/leaf_disease --model_type base --checkpoint checkpoints/base/model_best.pth
 
-# MobileNetV2 with Mish
+# MobileNetV2 com Mish
 python evaluate.py --data_dir datasets/leaf_disease --model_type mish --checkpoint checkpoints/mish/model_best.pth
-
-# MobileNetV2 with Mish and Triplet Attention
-python evaluate.py --data_dir datasets/leaf_disease --model_type triplet --checkpoint checkpoints/triplet/model_best.pth
-
-# MobileNetV2 with Mish, Triplet Attention, and CNSN
-python evaluate.py --data_dir datasets/leaf_disease --model_type cnsn --checkpoint checkpoints/cnsn/model_best.pth
 ```
 
-#### Evaluation with Enhanced Preprocessing
+## Estratégia de Divisão do Dataset
 
-```bash
-# Add --enhanced_preprocessing flag to use enhanced preprocessing
-python evaluate.py --data_dir datasets/leaf_disease --model_type base --checkpoint checkpoints/base/model_best.pth --enhanced_preprocessing
-```
+Este projeto usa uma estratégia de divisão em três partes:
+1. **Conjunto de teste**: 10% de todo o dataset
+2. **Conjunto de treinamento**: 72% de todo o dataset (80% dos 90% restantes)
+3. **Conjunto de validação**: 18% de todo o dataset (20% dos 90% restantes)
 
-#### GPU Evaluation Commands
+A divisão é realizada automaticamente ao carregar o dataset pela primeira vez, criando diretórios separados para cada divisão mantendo a estrutura de classes.
 
-```bash
-# Add --device cuda to use GPU acceleration
-python evaluate.py --data_dir datasets/leaf_disease --model_type base --checkpoint checkpoints/base/model_best.pth --device cuda
-```
+## Testes
 
-### Data Augmentation Visualization
-
-To visualize how data augmentation affects your training images:
-
-```bash
-# Visualize standard augmentations
-python utils/visualize_transforms.py --image_path datasets/leaf_disease/class1/img001.jpg --output_dir experiments/visualizations
-
-# Visualize enhanced augmentations
-python utils/visualize_transforms.py --image_path datasets/leaf_disease/class1/img001.jpg --output_dir experiments/visualizations --enhanced
-```
-
-## Dataset Split Strategy
-
-This project uses a three-way split strategy:
-1. **Test set**: 10% of the entire dataset
-2. **Training set**: 72% of the entire dataset (80% of the remaining 90%)
-3. **Validation set**: 18% of the entire dataset (20% of the remaining 90%)
-
-The split is performed automatically when loading the dataset for the first time, creating separate directories for each split while maintaining the class structure.
-
-## Testing
-
-Run tests to verify the implementation:
+Execute testes para verificar a implementação:
 
 ```bash
 pytest
 ```
 
-## Development Guidelines
+## Diretrizes de Desenvolvimento
 
-1. Follow PEP 8 style guidelines
-2. Write docstrings for all functions and classes
-3. Add unit tests for new functionality
-4. Use git branches for new features
-5. Run tests before committing changes
+1. Siga diretrizes de estilo PEP 8
+2. Escreva docstrings para todas as funções e classes
+3. Adicione testes unitários para nova funcionalidade
+4. Use branches git para novas funcionalidades
+5. Execute testes antes de fazer commits
 
-## License
+## Licença
 
-[MIT License](LICENSE)
-
+[Licença MIT](LICENSE)

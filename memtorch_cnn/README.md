@@ -1,162 +1,162 @@
-# MemTorch-based CNN for Leaf Disease Classification
+# CNN Baseada em MemTorch para Classificação de Doenças Foliares
 
-This project implements a MemTorch-based Convolutional Neural Network (CNN) for leaf disease classification. The implementation leverages memristor crossbar arrays for efficient computation, providing significant improvements in energy efficiency and latency compared to conventional CNN implementations.
+Este projeto implementa uma Rede Neural Convolucional (CNN) baseada em MemTorch para classificação de doenças foliares. A implementação aproveita arrays crossbar de memristores para computação eficiente, fornecendo melhorias significativas em eficiência energética e latência comparado a implementações CNN convencionais.
 
-## Features
+## Características
 
-- **MemTorch Integration**: Uses MemTorch for accurate memristor device modeling
-- **Hybrid Training Approach**: Ex-situ training followed by in-situ fine-tuning
-- **Hardware-Aware Training**: Accounts for memristor constraints during training
-- **Energy Efficiency Analysis**: Compares energy consumption with conventional CNNs
-- **Latency Analysis**: Compares inference latency with conventional CNNs
-- **Non-Ideality Modeling**: Simulates device variations and state drift
+- **Integração MemTorch**: Usa MemTorch para modelagem precisa de dispositivos memristores
+- **Abordagem de Treinamento Híbrido**: Treinamento ex-situ seguido por ajuste fino in-situ
+- **Treinamento Consciente de Hardware**: Considera restrições de memristores durante treinamento
+- **Análise de Eficiência Energética**: Compara consumo de energia com CNNs convencionais
+- **Análise de Latência**: Compara latência de inferência com CNNs convencionais
+- **Modelagem de Não-Idealidades**: Simula variações de dispositivo e deriva de estado
 
-## Installation
+## Instalação
 
-### Prerequisites
+### Pré-requisitos
 
 - Python 3.7+
 - PyTorch 1.7+
-- CUDA (optional, for GPU acceleration)
+- CUDA (opcional, para aceleração GPU)
 
-### Setup
+### Configuração
 
-1. Clone the repository:
+1. Clone o repositório:
 ```bash
 git clone <repository-url>
 cd ic-usp-ep
 ```
 
-2. Create and activate a virtual environment:
+2. Crie e ative um ambiente virtual:
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # No Windows: venv\Scripts\activate
 ```
 
-3. Install dependencies:
+3. Instale as dependências:
 ```bash
 pip install -r memtorch_cnn/requirements.txt
 ```
 
-## Usage
+## Uso
 
-### Training
+### Treinamento
 
-To train the MemTorch-based CNN model:
+Para treinar o modelo CNN baseado em MemTorch:
 
 ```bash
 python memtorch_cnn/train.py --data_dir datasets/leaf_disease --device cuda --batch_size 32 --ex_situ_epochs 50 --in_situ_epochs 10
 ```
 
-#### Training Options
+#### Opções de Treinamento
 
-- `--data_dir`: Path to the dataset directory
-- `--enhanced_augmentation`: Use enhanced data augmentation
-- `--width_mult`: Width multiplier for the network (default: 0.75)
-- `--tile_shape`: Shape of memristor crossbar tiles (default: 128 128)
-- `--adc_resolution`: ADC resolution in bits (default: 8)
-- `--dac_resolution`: DAC resolution in bits (default: 8)
-- `--max_input_voltage`: Maximum input voltage (default: 0.3)
-- `--batch_size`: Batch size for training (default: 32)
-- `--ex_situ_epochs`: Number of ex-situ training epochs (default: 50)
-- `--in_situ_epochs`: Number of in-situ training epochs (default: 10)
-- `--lr`: Initial learning rate (default: 0.001)
-- `--weight_decay`: Weight decay (default: 1e-4)
-- `--threshold`: Threshold for in-situ weight updates (default: 0.1)
-- `--device`: Device to use (cuda or cpu)
-- `--checkpoint_dir`: Directory to save checkpoints
-- `--results_dir`: Directory to save results
-- `--skip_ex_situ`: Skip ex-situ training phase
-- `--skip_in_situ`: Skip in-situ training phase
-- `--resume`: Path to checkpoint to resume from
-- `--debug`: Enable debug mode (reduced dataset size)
+- `--data_dir`: Caminho para o diretório do dataset
+- `--enhanced_augmentation`: Usar aumento de dados aprimorado
+- `--width_mult`: Multiplicador de largura para a rede (padrão: 0.75)
+- `--tile_shape`: Forma dos tiles crossbar memristor (padrão: 128 128)
+- `--adc_resolution`: Resolução ADC em bits (padrão: 8)
+- `--dac_resolution`: Resolução DAC em bits (padrão: 8)
+- `--max_input_voltage`: Tensão máxima de entrada (padrão: 0.3)
+- `--batch_size`: Tamanho do lote para treinamento (padrão: 32)
+- `--ex_situ_epochs`: Número de épocas de treinamento ex-situ (padrão: 50)
+- `--in_situ_epochs`: Número de épocas de treinamento in-situ (padrão: 10)
+- `--lr`: Taxa de aprendizado inicial (padrão: 0.001)
+- `--weight_decay`: Decaimento de peso (padrão: 1e-4)
+- `--threshold`: Limiar para atualizações de peso in-situ (padrão: 0.1)
+- `--device`: Dispositivo a usar (cuda ou cpu)
+- `--checkpoint_dir`: Diretório para salvar checkpoints
+- `--results_dir`: Diretório para salvar resultados
+- `--skip_ex_situ`: Pular fase de treinamento ex-situ
+- `--skip_in_situ`: Pular fase de treinamento in-situ
+- `--resume`: Caminho para checkpoint para retomar
+- `--debug`: Habilitar modo debug (tamanho de dataset reduzido)
 
-### Evaluation
+### Avaliação
 
-To evaluate a trained model:
+Para avaliar um modelo treinado:
 
 ```bash
 python memtorch_cnn/evaluate.py --data_dir datasets/leaf_disease --checkpoint checkpoints/memtorch_cnn/model_best_in_situ.pth --device cuda
 ```
 
-#### Evaluation Options
+#### Opções de Avaliação
 
-- `--data_dir`: Path to the dataset directory
-- `--width_mult`: Width multiplier for the network (default: 0.75)
-- `--checkpoint`: Path to the checkpoint to evaluate
-- `--device`: Device to use (cuda or cpu)
-- `--batch_size`: Batch size for evaluation (default: 32)
-- `--results_dir`: Directory to save results
+- `--data_dir`: Caminho para o diretório do dataset
+- `--width_mult`: Multiplicador de largura para a rede (padrão: 0.75)
+- `--checkpoint`: Caminho para o checkpoint a avaliar
+- `--device`: Dispositivo a usar (cuda ou cpu)
+- `--batch_size`: Tamanho do lote para avaliação (padrão: 32)
+- `--results_dir`: Diretório para salvar resultados
 
-## Model Architecture
+## Arquitetura do Modelo
 
-The MemTorch-based CNN uses a MobileNetV2-like architecture with the following components:
+A CNN baseada em MemTorch usa uma arquitetura similar ao MobileNetV2 com os seguintes componentes:
 
-1. **First Conv Layer**: Standard convolutional layer (kept as digital)
-2. **Inverted Residual Blocks**: Converted to memristive layers
-3. **Last Conv Layer**: Converted to memristive layer
-4. **Global Average Pooling**: Standard pooling layer (kept as digital)
-5. **Classifier**: Fully connected layer converted to memristive layer
+1. **Primeira Camada Conv**: Camada convolucional padrão (mantida como digital)
+2. **Blocos Residuais Invertidos**: Convertidos para camadas memristivas
+3. **Última Camada Conv**: Convertida para camada memristiva
+4. **Pooling Médio Global**: Camada de pooling padrão (mantida como digital)
+5. **Classificador**: Camada totalmente conectada convertida para camada memristiva
 
-### Memristor Configuration
+### Configuração do Memristor
 
-- **Device Model**: LinearIonDrift
-- **Crossbar Array Size**: 128×128
-- **Resistance Range**: 100Ω (ON) to 16kΩ (OFF)
-- **ADC/DAC Resolution**: 8 bits
-- **Weight Quantization**: 4 bits (16 levels)
+- **Modelo de Dispositivo**: LinearIonDrift
+- **Tamanho do Array Crossbar**: 128×128
+- **Faixa de Resistência**: 100Ω (ON) a 16kΩ (OFF)
+- **Resolução ADC/DAC**: 8 bits
+- **Quantização de Peso**: 4 bits (16 níveis)
 
-## Hybrid Training Approach
+## Abordagem de Treinamento Híbrido
 
-The training process consists of two phases:
+O processo de treinamento consiste em duas fases:
 
-1. **Ex-situ Training**:
-   - Conventional training on GPU/CPU
-   - All layers are trainable
-   - Standard backpropagation
+1. **Treinamento Ex-situ**:
+   - Treinamento convencional em GPU/CPU
+   - Todas as camadas são treináveis
+   - Retropropagação padrão
 
-2. **Weight Transfer**:
-   - Convert model to memristive
-   - Apply weight quantization
-   - Apply non-idealities
+2. **Transferência de Pesos**:
+   - Converter modelo para memristivo
+   - Aplicar quantização de pesos
+   - Aplicar não-idealidades
 
-3. **In-situ Training**:
-   - Freeze convolutional layers
-   - Only update FC layer weights
-   - Threshold-based updates
-   - Hardware-aware training
+3. **Treinamento In-situ**:
+   - Congelar camadas convolucionais
+   - Atualizar apenas pesos da camada FC
+   - Atualizações baseadas em limiar
+   - Treinamento consciente de hardware
 
-## Performance Analysis
+## Análise de Performance
 
-The MemTorch-based CNN provides significant improvements over conventional CNNs:
+A CNN baseada em MemTorch fornece melhorias significativas sobre CNNs convencionais:
 
-- **Energy Efficiency**: 10-100× improvement
-- **Latency**: 2-5× improvement
-- **Model Size**: Similar to conventional CNN
+- **Eficiência Energética**: Melhoria de 10-100×
+- **Latência**: Melhoria de 2-5×
+- **Tamanho do Modelo**: Similar à CNN convencional
 
-## Testing
+## Testes
 
-To run the tests:
+Para executar os testes:
 
 ```bash
 python -m unittest discover memtorch_cnn/tests
 ```
 
-## Comparison with Custom Memristor Implementation
+## Comparação com Implementação Memristor Personalizada
 
-This MemTorch-based implementation offers several advantages over the custom memristor implementation:
+Esta implementação baseada em MemTorch oferece várias vantagens sobre a implementação memristor personalizada:
 
-1. **More Accurate Device Models**: MemTorch includes realistic memristor models that capture actual device physics
-2. **Built-in Non-idealities**: Simulates device-to-device variations, state drift, and other non-ideal characteristics
-3. **Seamless PyTorch Integration**: Extends PyTorch's Module class for easy model conversion
-4. **Hardware-Aware Training**: Accounts for memristor constraints during training
-5. **Energy and Performance Analysis**: Built-in tools for analyzing energy consumption and performance
+1. **Modelos de Dispositivo Mais Precisos**: MemTorch inclui modelos memristor realistas que capturam física real do dispositivo
+2. **Não-idealidades Integradas**: Simula variações dispositivo-a-dispositivo, deriva de estado e outras características não-ideais
+3. **Integração Perfeita com PyTorch**: Estende a classe Module do PyTorch para conversão fácil de modelo
+4. **Treinamento Consciente de Hardware**: Considera restrições de memristor durante treinamento
+5. **Análise de Energia e Performance**: Ferramentas integradas para analisar consumo de energia e performance
 
-## License
+## Licença
 
-[MIT License](LICENSE)
+[Licença MIT](LICENSE)
 
-## Acknowledgments
+## Agradecimentos
 
 - MemTorch: https://github.com/coreylammie/MemTorch
 - PyTorch: https://pytorch.org/
